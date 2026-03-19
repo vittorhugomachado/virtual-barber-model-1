@@ -1,3 +1,4 @@
+import { Scissors } from "lucide-react";
 import { useBarbershop } from "../hooks/useBarbershop";
 import {
   Carousel,
@@ -10,7 +11,7 @@ import {
 export function ServicesSection() {
   const { services, style } = useBarbershop();
   const { background_color, primary_color, text_color } = style;
-
+  console.log(services);
   return (
     <section
       id="servicos"
@@ -29,33 +30,61 @@ export function ServicesSection() {
         </div>
 
         {/* CARROSSEL */}
-        <Carousel opts={{ align: "start", loop: true }} className="w-full px-10">
+        <Carousel
+          opts={{ align: "start", loop: true }}
+          className="w-full px-10"
+        >
           <CarouselContent className="-ml-6">
             {services.map((service) => (
               <CarouselItem
                 key={service.id}
                 className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3"
               >
-                <div className="group cursor-pointer">
+                <div
+                  style={{ borderColor: `${text_color}30` }}
+                  className="group cursor-pointer h-full border"
+                >
                   <div className="relative overflow-hidden">
-                    <div
-                      style={{ backgroundColor: primary_color }}
-                      className="absolute top-2 left-2 w-full h-full z-0 transition-all duration-300 group-hover:top-1 group-hover:left-1"
-                    />
-                    <img
-                      src={service.image_url ?? ""}
-                      alt={service.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="relative z-10 w-full h-62.5 object-cover"
-                    />
+                    {service.image_url ? (
+                      <img
+                        src={service.image_url ?? ""}
+                        alt={service.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="relative z-10 w-full h-62.5 object-cover"
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          backgroundColor: text_color,
+                          color: background_color,
+                        }}
+                        className="flex items-center justify-center h-62.5 opacity-50"
+                      >
+                        <Scissors size={148} />
+                      </div>
+                    )}
                   </div>
-                  <h3
+                  <div
                     style={{ borderColor: primary_color }}
-                    className="mt-1 text-xl font-bold uppercase tracking-wide border-l-2 pl-2 pt-3"
+                    className="flex items-center justify-between border-l-2 px-2 py-2"
                   >
-                    {service.name}
-                  </h3>
+                    <h3 className="mt-1 text-xl font-bold uppercase tracking-wide ">
+                      {service.name}
+                    </h3>
+                    <p>{service.duration_min} min</p>
+                  </div>
+                  <div className="px-3 pb-3 mt-2 gap-2 flex flex-col">
+                    <p>{service.description}</p>
+                    <p className="font-semibold">
+                      {service.price != null
+                        ? new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(service.price)
+                        : ""}
+                    </p>
+                  </div>
                 </div>
               </CarouselItem>
             ))}
