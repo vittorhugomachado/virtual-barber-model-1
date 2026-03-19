@@ -42,6 +42,15 @@ export interface Address {
   complement?: string | null;
 }
 
+export interface OpeningHour {
+  id: string;
+  day_of_week: number;
+  opens_at: string;
+  closes_at: string;
+  period_order: number;
+  is_open: boolean;
+}
+
 // Dados completos da barbearia para o contexto
 export interface BarbershopData {
   // public.barbershops
@@ -67,4 +76,7 @@ export interface BarbershopData {
 
   // public.barbers
   barbers: Barber[];
+
+  // public.opening_hours
+  openingHours: OpeningHour[];
 }

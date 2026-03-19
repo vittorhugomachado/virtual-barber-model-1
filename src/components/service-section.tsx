@@ -45,6 +45,8 @@ export function ServicesSection() {
                     <img
                       src={service.image_url ?? ""}
                       alt={service.name}
+                      loading="lazy"
+                      decoding="async"
                       className="relative z-10 w-full h-62.5 object-cover"
                     />
                   </div>

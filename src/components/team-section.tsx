@@ -53,6 +53,8 @@ export function TeamSection() {
                       <img
                         src={barber.avatar_url ?? ""}
                         alt={barber.name}
+                        loading="lazy"
+                        decoding="async"
                         className="relative z-10 w-full h-70 object-cover object-top"
                       />
                     </div>

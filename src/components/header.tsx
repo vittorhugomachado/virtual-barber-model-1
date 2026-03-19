@@ -69,7 +69,7 @@ export function Header() {
               <a href="#equipe">EQUIPE</a>
             </li>
             <li className={navItemClass}>
-              <a href="#contato">CONTATO</a>
+              <a href="#horarios">HORÁRIOS</a>
             </li>
             <li className="ml-2">
               <div className="relative">
@@ -132,7 +132,7 @@ export function Header() {
                 <a href="#equipe">EQUIPE</a>
               </li>
               <li className={navItemClass}>
-                <a href="#contato">CONTATO</a>
+                <a href="#horarios">HORÁRIOS</a>
               </li>
               <li className="mt-2 w-full max-w-36">
                 <div className="relative w-full">

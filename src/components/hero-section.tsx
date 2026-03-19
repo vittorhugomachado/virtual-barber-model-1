@@ -4,7 +4,7 @@ export function HeroSection() {
   const { banner_url, style } = useBarbershop();
   const { background_color, primary_color, text_color, text_button_color } =
     style;
-  console.log(banner_url);
+
   return (
     <section
       style={{ backgroundImage: `url('${banner_url}')` }}
