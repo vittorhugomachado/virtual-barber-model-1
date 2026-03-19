@@ -55,19 +55,19 @@ export function HoursSection() {
             {scheduleByDay.map((day) => (
               <div
                 key={day.label}
-                className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-3 px-5 py-4 md:flex-row items-center md:justify-between"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <Clock3 style={{ color: primary_color }} className="size-5 shrink-0" />
                   <span className="text-lg font-bold uppercase tracking-wide">
                     {day.label}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-2 md:justify-end">
+                <div className="flex justify-center flex-wrap gap-2 md:justify-end">
                   {day.isClosed ? (
                     <span
-                      style={{ borderColor: primary_color, color: text_color }}
+                      style={{ borderColor: text_color, color: text_color }}
                       className="border px-3 py-1 text-sm font-semibold uppercase tracking-wider opacity-70"
                     >
                       Fechado
@@ -76,7 +76,7 @@ export function HoursSection() {
                     day.periods.map((period) => (
                       <span
                         key={period.id}
-                        style={{ backgroundColor: primary_color, color: background_color }}
+                        style={{ backgroundColor: text_color, color: background_color }}
                         className="px-3 py-1 text-sm font-bold uppercase tracking-wider"
                       >
                         {formatHour(period.opens_at)} - {formatHour(period.closes_at)}
