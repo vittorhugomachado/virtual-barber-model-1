@@ -15,8 +15,9 @@ export function Section2({
 }: Section2Props) {
   return (
     <section
+      id="sobre"
       style={{ backgroundColor, color: textColor }}
-      className="w-full min-h-screen px-6 md:px-10 lg:px-16 py-16 md:py-24 overflow-hidden"
+      className="scroll-mt-[11vh] w-full min-h-screen px-6 md:px-10 lg:px-16 py-16 md:py-24 overflow-hidden"
     >
       <div className="max-w-350 mx-auto">
         <div className="mb-6 md:mb-12 lg:ml-18 xl:ml-56">

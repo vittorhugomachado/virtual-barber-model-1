@@ -56,7 +56,7 @@ export function Header({
         style={{ backgroundColor: backgroundColor }}
         className="w-full text-md xl:text-lg font-bold px-4 md:px-6 fixed top-0 left-0 z-50"
       >
-        <div className="flex items-center justify-between h-[11vh]">
+        <div className="flex items-center justify-between min-h-[11vh]">
           <h2 className="text-center text-3xl xl:text-4xl inline text-amber-50 px-2">
             {barbershopName.toUpperCase()}
           </h2>
@@ -65,10 +65,23 @@ export function Header({
             style={{ color: textColor }}
             className="nav-desktop gap-6 items-center mr-4"
           >
-            {description != null && <li className={navItemClass}>SOBRE</li>}
-            <li className={navItemClass}>SERVIÇOS</li>
-            <li className={navItemClass}>EQUIPE</li>
-            <li className={navItemClass}>CONTATO</li>
+            {description && (
+              <li className={navItemClass}>
+                <a href="#sobre">SOBRE</a>
+              </li>
+            )}
+
+            <li className={navItemClass}>
+              <a href="#servicos">SERVIÇOS</a>
+            </li>
+
+            <li className={navItemClass}>
+              <a href="#equipe">EQUIPE</a>
+            </li>
+
+            <li className={navItemClass}>
+              <a href="#contato">CONTATO</a>
+            </li>
 
             <li className="ml-2">
               <div className="relative">
@@ -107,16 +120,26 @@ export function Header({
         <div
           className={`mobile-menu-wrapper overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-60 pb-4" : "max-h-0"}`}
         >
-          <ul
-            style={{ color: textColor }}
-            className="flex flex-col gap-4 pt-2 pb-6"
-          >
-            {description != null && <li className={navItemClass}>SOBRE</li>}
-            <li className={navItemClass}>SERVIÇOS</li>
-            <li className={navItemClass}>EQUIPE</li>
-            <li className={navItemClass}>CONTATO</li>
+          <ul style={{ color: textColor }} className="flex flex-col gap-4 pl-2">
+            {description && (
+              <li className={navItemClass}>
+                <a href="#sobre">SOBRE</a>
+              </li>
+            )}
 
-            <li className="mt-4 max-w-36">
+            <li className={navItemClass}>
+              <a href="#servicos">SERVIÇOS</a>
+            </li>
+
+            <li className={navItemClass}>
+              <a href="#equipe">EQUIPE</a>
+            </li>
+
+            <li className={navItemClass}>
+              <a href="#contato">CONTATO</a>
+            </li>
+
+            <li className="mt-2 max-w-36">
               <div className="relative">
                 <div
                   style={{ backgroundColor: primaryColor }}
