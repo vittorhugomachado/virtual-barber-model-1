@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-interface Section1Props {
+interface HeroSectionProps {
   backgroundHero: string;
   backgroundColor: string;
   textColor: string;
@@ -8,7 +8,7 @@ interface Section1Props {
   children?: ReactNode;
 }
 
-export function Section1(data: Section1Props) {
+export function HeroSection(data: HeroSectionProps) {
   return (
     <section
       style={{ backgroundImage: `url('${data.backgroundHero}')` }}

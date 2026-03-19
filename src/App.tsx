@@ -1,7 +1,7 @@
 import { Header } from "./components/header";
-import { Section1 } from "./components/section-1";
-import { Section2 } from "./components/section-2";
-import { Section3 } from "./components/section-3";
+import { HeroSection } from "./components/hero-section";
+import { AboutSection } from "./components/about-section";
+import { ServicesSection } from "./components/service-section";
 
 const mockData = {
   barbershopName: "Freshcut",
@@ -26,6 +26,18 @@ const mockData = {
       name: "Combo",
       image: "/service3.png",
     },
+    {
+      name: "Combo",
+      image: "/service4.png",
+    },
+    {
+      name: "Combo",
+      image: "/service5.png",
+    },
+    {
+      name: "Combo",
+      image: "/service6.png",
+    },
   ],
 };
 
@@ -41,21 +53,21 @@ function App() {
         description={mockData.description}
       />
 
-      <Section1
+      <HeroSection
         backgroundHero={mockData.backgroundHero}
         backgroundColor={mockData.backgroundColor}
         textColor={mockData.textColor}
         primaryColor={mockData.primaryColor}
       />
 
-      <Section2
+      <AboutSection
         backgroundColor={mockData.backgroundColor}
         primaryColor={mockData.primaryColor}
         textColor={mockData.textColor}
         description={mockData.description}
-        imageSection2={mockData.aboutImage}
+        imageAboutSection={mockData.aboutImage}
       />
-      <Section3
+      <ServicesSection
         backgroundColor={mockData.backgroundColor}
         primaryColor={mockData.primaryColor}
         textColor={mockData.textColor}

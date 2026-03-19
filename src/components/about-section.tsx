@@ -1,23 +1,23 @@
-interface Section2Props {
+interface AboutSectionProps {
   backgroundColor: string;
   primaryColor: string;
   textColor: string;
   description: string;
-  imageSection2: string;
+  imageAboutSection: string;
 }
 
-export function Section2({
+export function AboutSection({
   backgroundColor,
   primaryColor,
   textColor,
   description,
-  imageSection2,
-}: Section2Props) {
+  imageAboutSection,
+}: AboutSectionProps) {
   return (
     <section
       id="sobre"
       style={{ backgroundColor, color: textColor }}
-      className="scroll-mt-[11vh] w-full min-h-screen px-6 md:px-10 lg:px-16 py-16 md:py-24 overflow-hidden"
+      className="scroll-mt-[11vh] w-full px-6 md:px-10 lg:px-16 py-16 md:py-24 overflow-hidden"
     >
       <div className="max-w-350 mx-auto">
         <div className="mb-6 md:mb-12 lg:ml-18 xl:ml-56">
@@ -37,7 +37,7 @@ export function Section2({
             />
 
             <img
-              src={imageSection2}
+              src={imageAboutSection}
               alt="Interior da barbearia"
               style={{ borderColor: textColor }}
               className="relative z-10 w-full max-w-125 h-auto object-cover block border-3"
