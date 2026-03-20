@@ -33,6 +33,10 @@ export function Header() {
   const desktopUserMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileUserMenuRef = useRef<HTMLDivElement | null>(null);
   const bp = getBreakpoint(name);
+  const closeMobileMenu = () => {
+    setMenuOpen(false);
+    setUserMenuOpen(false);
+  };
 
   const navItemClass = `
     cursor-pointer transition-opacity relative
@@ -121,7 +125,7 @@ export function Header() {
         <div className="flex min-h-[11vh] items-center justify-between">
           <h2
             style={{ color: text_color }}
-            className="inline max-w-[60vw] px-2 text-center text-3xl leading-tight wrap-break-word sm:max-w-[70vw] xl:text-4xl"
+            className="inline max-w-[60vw] px-2 text-center text-2xl font-black leading-tight wrap-break-word sm:max-w-[70vw]"
           >
             {name.toUpperCase()}
           </h2>
@@ -131,16 +135,16 @@ export function Header() {
             className="nav-desktop items-center gap-6"
           >
             <li className={navItemClass}>
-              <a href="#horarios">HORÁRIOS</a>
+              <a href="#horarios" onClick={closeMobileMenu}>HORÁRIOS</a>
             </li>
             <li className={navItemClass}>
-              <a href="#equipe">EQUIPE</a>
+              <a href="#equipe" onClick={closeMobileMenu}>EQUIPE</a>
             </li>
             <li className={navItemClass}>
-              <a href="#servicos">SERVIÇOS</a>
+              <a href="#servicos" onClick={closeMobileMenu}>SERVIÇOS</a>
             </li>
             <li className={navItemClass}>
-              <a href="#contato">CONTATO</a>
+              <a href="#contato" onClick={closeMobileMenu}>CONTATO</a>
             </li>
             <li className="ml-2">
               <div className="relative">
@@ -150,7 +154,7 @@ export function Header() {
                 />
                 <button
                   type="button"
-                  onClick={() => openBookingModal()}
+                  onClick={() => { closeMobileMenu(); openBookingModal(); }}
                   style={{
                     color: text_color,
                     borderColor: text_color,
@@ -181,25 +185,25 @@ export function Header() {
                       borderColor: `${text_color}30`,
                       color: text_color,
                     }}
-                    className="absolute right-0 top-full z-130 mt-3 min-w-64 border p-3 shadow-2xl"
+                    className="absolute right-0 top-full z-130 mt-3 min-w-44 border p-2 shadow-2xl"
                   >
                     {profile ? (
                       <div className="space-y-1">
-                        <div className="border-b border-current/20 px-3 py-3 text-sm font-black uppercase tracking-[0.15em] opacity-80">
+                        <div className="border-b border-current/20 px-2 py-2 text-xs font-black uppercase tracking-[0.12em] opacity-80">
                           {profile.name}
                         </div>
                         <button
                           type="button"
-                          onClick={handleOpenMyAppointments}
-                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          onClick={() => { closeMobileMenu(); handleOpenMyAppointments(); }}
+                          className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                         >
                           <User className="size-4" />
                           Meu agendamentos
                         </button>
                         <button
                           type="button"
-                          onClick={handleSignOut}
-                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          onClick={async () => { closeMobileMenu(); await handleSignOut(); }}
+                          className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                         >
                           <LogOut className="size-4" />
                           Sair
@@ -210,7 +214,7 @@ export function Header() {
                         <button
                           type="button"
                           onClick={() => openAuthModal("entrar")}
-                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                         >
                           <LogIn className="size-4" />
                           Entrar
@@ -218,7 +222,7 @@ export function Header() {
                         <button
                           type="button"
                           onClick={() => openAuthModal("cadastrar")}
-                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                         >
                           <UserPlus className="size-4" />
                           Se cadastrar
@@ -233,7 +237,7 @@ export function Header() {
 
           <button
             style={{ color: text_color }}
-            className="hamburger  flex-col gap-1.5 p-2"
+            className="hamburger z-150 flex-col gap-1.5 p-2"
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Abrir menu"
           >
@@ -250,26 +254,46 @@ export function Header() {
         </div>
 
         <div
-          className={`mobile-menu-wrapper w-full overflow-hidden transition-all duration-300 ${
-            menuOpen ? "max-h-105 pb-4" : "max-h-0"
+          className={`mobile-menu-wrapper fixed inset-0 z-140 transition-opacity duration-300 ${
+            menuOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
           }`}
         >
-          <div className="max-w-full overflow-x-hidden px-2">
-            <ul
-              style={{ color: text_color, height: menuOpen ? "220px" : "" }}
-              className="flex w-full flex-col gap-4 pl-2"
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={closeMobileMenu}
+          />
+
+          <div
+            style={{
+              backgroundColor: background_color,
+              color: text_color,
+              borderColor: `${text_color}20`,
+            }}
+            className={`absolute left-0 top-0 flex h-screen w-[calc(100%-50px)] max-w-[280px] flex-col overflow-y-auto border-r px-6 pb-8 pt-6 shadow-2xl transition-transform duration-300 ${
+              menuOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <h2
+              style={{ color: text_color }}
+              className="mb-4 text-2xl font-black leading-tight wrap-break-word"
             >
+              {name.toUpperCase()}
+            </h2>
+
+            <ul className="flex w-full flex-col gap-4">
               <li className={navItemClass}>
-                <a href="#horarios">HORÁRIOS</a>
+                <a href="#horarios" onClick={closeMobileMenu}>HORÁRIOS</a>
               </li>
               <li className={navItemClass}>
-                <a href="#equipe">EQUIPE</a>
+                <a href="#equipe" onClick={closeMobileMenu}>EQUIPE</a>
               </li>
               <li className={navItemClass}>
-                <a href="#servicos">SERVIÇOS</a>
+                <a href="#servicos" onClick={closeMobileMenu}>SERVIÇOS</a>
               </li>
               <li className={navItemClass}>
-                <a href="#contato">CONTATO</a>
+                <a href="#contato" onClick={closeMobileMenu}>CONTATO</a>
               </li>
               <li className="mt-2 w-full max-w-36">
                 <div className="relative w-full">
@@ -279,7 +303,7 @@ export function Header() {
                   />
                   <button
                     type="button"
-                    onClick={() => openBookingModal()}
+                    onClick={() => { closeMobileMenu(); openBookingModal(); }}
                     style={{
                       color: text_color,
                       borderColor: text_color,
@@ -320,21 +344,21 @@ export function Header() {
                     >
                       {profile ? (
                         <div className="space-y-1">
-                          <div className="border-b border-current/20 px-3 py-3 text-sm font-black uppercase tracking-[0.15em] opacity-80">
+                          <div className="border-b border-current/20 px-2 py-2 text-xs font-black uppercase tracking-[0.12em] opacity-80">
                             {profile.name}
                           </div>
                           <button
                             type="button"
-                            onClick={handleOpenMyAppointments}
-                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                            onClick={() => { closeMobileMenu(); handleOpenMyAppointments(); }}
+                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                           >
                             <User className="size-4" />
                             Meu agendamentos
                           </button>
                           <button
                             type="button"
-                            onClick={handleSignOut}
-                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                            onClick={async () => { closeMobileMenu(); await handleSignOut(); }}
+                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                           >
                             <LogOut className="size-4" />
                             Sair
@@ -345,7 +369,7 @@ export function Header() {
                           <button
                             type="button"
                             onClick={() => openAuthModal("entrar")}
-                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                           >
                             <LogIn className="size-4" />
                             Entrar
@@ -353,7 +377,7 @@ export function Header() {
                           <button
                             type="button"
                             onClick={() => openAuthModal("cadastrar")}
-                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                            className="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-75"
                           >
                             <UserPlus className="size-4" />
                             Se cadastrar
@@ -391,3 +415,4 @@ export function Header() {
     </>
   );
 }
+

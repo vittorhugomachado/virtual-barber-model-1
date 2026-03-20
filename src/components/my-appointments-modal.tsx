@@ -1,4 +1,4 @@
-import { Clock3, Scissors, User, X, ChevronLeft } from "lucide-react";
+import { Clock3, Scissors, User, X, ChevronLeft, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useBarbershop } from "../hooks/useBarbershop";
 import { useCustomerAuth } from "../hooks/useCustomerAuth";
@@ -59,6 +59,19 @@ export function MyAppointmentsModal({
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [pendingCancelAppointment, setPendingCancelAppointment] =
     useState<CustomerAppointmentRecord | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
+  const toggleDate = (date: string) =>
+    setCollapsedDates(prev => ({ ...prev, [date]: !prev[date] }));
+
+  useEffect(() => {
+    if (appointments.length === 0) return;
+    const allCollapsed = appointments.reduce<Record<string, boolean>>((acc, apt) => {
+      const date = formatStoredAppointmentDate(apt.starts_at);
+      acc[date] = true;
+      return acc;
+    }, {});
+    setCollapsedDates(allCollapsed);
+  }, [appointments]);
 
   const loadAppointments = useCallback(
     async (authUserId: string) => {
@@ -217,123 +230,124 @@ export function MyAppointmentsModal({
                   Nenhum agendamento encontrado.
                 </p>
               ) : (
-                appointments.map((appointment) => {
-                  const normalizedStatus =
-                    appointment.status?.toLowerCase() ?? "";
-                  const isScheduled = normalizedStatus === "scheduled";
-                  const isNoShow = normalizedStatus === "no_show";
-                  const isCancelled = normalizedStatus.includes("cancel");
-                  const statusStyles = isScheduled
-                    ? {
-                        backgroundColor: "#123BBA",
-                        color: "#FFFFFF",
-                      }
-                    : isNoShow
-                      ? {
-                          backgroundColor: "#9CA3AF",
-                          color: "#000000",
-                        }
-                      : isCancelled
-                        ? {
-                            backgroundColor: "#DC2626",
-                            color: "#FFFFFF",
-                          }
-                        : {
-                            backgroundColor: "transparent",
-                            color: text_color,
-                          };
+                (() => {
+                  const grouped = appointments.reduce<Record<string, typeof appointments>>((acc, apt) => {
+                    const date = formatStoredAppointmentDate(apt.starts_at);
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(apt);
+                    return acc;
+                  }, {});
 
-                  return (
-                  <div
-                    key={appointment.id}
-                    style={{ borderColor: `${text_color}20` }}
-                    className="flex flex-col gap-3 border px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="flex-1 min-w-0 space-y-3">
-                      <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                        <div className="flex items-center gap-1 text-sm shrink-0">
-                          <span
-                            style={{ color: text_color }}
-                            className="font-semibold uppercase tracking-[0.18em]"
-                          >
-                            {formatStoredAppointmentDate(appointment.starts_at)}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1 text-sm shrink-0">
-                          <Clock3
-                            style={{ color: primary_color }}
-                            className="h-3.5 w-3.5 shrink-0"
-                          />
-                          <span className="font-medium">
-                            {formatStoredAppointmentTime(appointment.starts_at)}
-                          </span>
-                          <span className="opacity-50">-</span>
-                          <span className="opacity-70">
-                            {formatStoredAppointmentTime(appointment.ends_at)}
-                          </span>
-                        </div>
-
-                        <div className="flex min-w-0 items-center gap-1.5 text-sm overflow-hidden">
-                          <User
-                            style={{ color: primary_color }}
-                            className="h-3.5 w-3.5 shrink-0"
-                          />
-                          <span className="truncate font-medium">
-                            {appointment.barber?.name ?? "Barbeiro"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm lg:justify-start">
-                        <Scissors
-                          style={{ color: primary_color }}
-                          className="h-3.5 w-3.5 shrink-0"
-                        />
-                        <span className="truncate opacity-80">
-                          {appointment.service?.name ?? "Servico"}
-                        </span>
-                        <span className="opacity-50">-</span>
-                        <span className="font-semibold">
-                          {appointment.service?.price != null
-                            ? Number(appointment.service.price).toLocaleString(
-                                "pt-BR",
-                                {
-                                  style: "currency",
-                                  currency: "BRL",
-                                },
-                              )
-                            : "-"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center gap-1 lg:items-center lg:justify-center">
-                      <span
-                        style={{
-                          borderColor: `${text_color}25`,
-                          ...statusStyles,
-                        }}
-                        className="border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+                  return Object.entries(grouped).map(([date, dayAppointments]) => {
+                    const isCollapsed = !!collapsedDates[date];
+                    return (
+                    <div key={date} className="flex flex-col gap-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleDate(date)}
+                        style={{ color: text_color }}
+                        className="flex items-center gap-2 cursor-pointer"
                       >
-                        {formatAppointmentStatus(appointment.status)}
-                      </span>
+                        <ChevronDown
+                          className={`h-4 w-4 opacity-60 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+                        />
+                        <p className="text-sm font-black uppercase tracking-[0.18em] opacity-60">
+                          {date}
+                        </p>
+                      </button>
 
-                      {isScheduled && (
-                        <button
-                          type="button"
-                          onClick={() => setPendingCancelAppointment(appointment)}
-                          disabled={isCancellingId === appointment.id}
-                          className="cursor-pointer px-3 py-2 text-xs tracking-[0.18em] text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {isCancellingId === appointment.id
-                            ? "Cancelando..."
-                            : "cancelar"}
-                        </button>
-                      )}
+                      {!isCollapsed && dayAppointments.map((appointment) => {
+                        const normalizedStatus =
+                          appointment.status?.toLowerCase() ?? "";
+                        const isScheduled = normalizedStatus === "scheduled";
+                        const isNoShow = normalizedStatus === "no_show";
+                        const isCancelled = normalizedStatus.includes("cancel");
+                        const statusStyles = isScheduled
+                          ? { backgroundColor: "#123BBA", color: "#FFFFFF" }
+                          : isNoShow
+                            ? { backgroundColor: "#9CA3AF", color: "#000000" }
+                            : isCancelled
+                              ? { backgroundColor: "#DC2626", color: "#FFFFFF" }
+                              : { backgroundColor: "transparent", color: text_color };
+
+                        return (
+                          <div
+                            key={appointment.id}
+                            style={{ borderColor: `${text_color}20` }}
+                            className="flex flex-col gap-3 border px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
+                          >
+                            <div className="flex-1 min-w-0 space-y-3">
+                              <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                                <div className="flex items-center gap-1 text-sm shrink-0">
+                                  <Clock3
+                                    style={{ color: primary_color }}
+                                    className="h-3.5 w-3.5 shrink-0"
+                                  />
+                                  <span className="font-medium">
+                                    {formatStoredAppointmentTime(appointment.starts_at)}
+                                  </span>
+                                  <span className="opacity-50">-</span>
+                                  <span className="opacity-70">
+                                    {formatStoredAppointmentTime(appointment.ends_at)}
+                                  </span>
+                                </div>
+
+                                <div className="flex min-w-0 items-center gap-1.5 text-sm overflow-hidden">
+                                  <User
+                                    style={{ color: primary_color }}
+                                    className="h-3.5 w-3.5 shrink-0"
+                                  />
+                                  <span className="truncate font-medium">
+                                    {appointment.barber?.name ?? "Barbeiro"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm lg:justify-start">
+                                <Scissors
+                                  style={{ color: primary_color }}
+                                  className="h-3.5 w-3.5 shrink-0"
+                                />
+                                <span className="truncate opacity-80">
+                                  {appointment.service?.name ?? "Servico"}
+                                </span>
+                                <span className="opacity-50">-</span>
+                                <span className="font-semibold">
+                                  {appointment.service?.price != null
+                                    ? Number(appointment.service.price).toLocaleString("pt-BR", {
+                                        style: "currency",
+                                        currency: "BRL",
+                                      })
+                                    : "-"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span
+                                style={{ borderColor: `${text_color}25`, ...statusStyles }}
+                                className="border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+                              >
+                                {formatAppointmentStatus(appointment.status)}
+                              </span>
+
+                              {isScheduled && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingCancelAppointment(appointment)}
+                                  disabled={isCancellingId === appointment.id}
+                                  className="cursor-pointer px-3 py-2 text-xs tracking-[0.18em] text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  {isCancellingId === appointment.id ? "Cancelando..." : "cancelar"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                )})
+                  )});
+                })()
               )}
             </div>
           </div>

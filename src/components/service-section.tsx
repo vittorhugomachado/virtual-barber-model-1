@@ -46,7 +46,7 @@ export function ServicesSection() {
                   type="button"
                   onClick={() => openBookingModal([service.id])}
                   style={{ borderColor: `${text_color}30` }}
-                  className="group h-full w-full cursor-pointer border text-left"
+                  className="group flex flex-col h-full w-full cursor-pointer border text-left"
                 >
                   <div className="relative overflow-hidden">
                     {service.image_url ? (

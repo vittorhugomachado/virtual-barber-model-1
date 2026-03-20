@@ -49,11 +49,18 @@ export function ContactSection() {
   ].filter(Boolean);
 
   const fullAddress = addressParts.join(", ");
+
+  const mapQuery = address?.street
+    ? address.neighborhood
+      ? `${address.street}, ${address.number} - ${address.neighborhood}`
+      : `${address.street}, ${address.number}`
+    : fullAddress;
+
   const mapUrl = address
     ? getMapEmbedUrl({
         latitude: address.latitude,
         longitude: address.longitude,
-        query: fullAddress,
+        query: mapQuery,
       })
     : null;
 
