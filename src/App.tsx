@@ -1,16 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Routes, useParams } from "react-router-dom";
-import { ContactSection } from "./components/contact-section";
-import { Header } from "./components/header";
-import { HeroSection } from "./components/hero-section";
-import { BookingProvider } from "./components/booking-modal";
-import { HoursSection } from "./components/hours-section";
 import { LoadingComponent } from "./components/loading-component";
-import { ServicesSection } from "./components/service-section";
-import { TeamSection } from "./components/team-section";
 import { BarberProvider } from "./context/barber-provider";
 import { fetchBarbershopBySlug } from "./services/barbershop.service";
 import type { BarbershopData } from "./types/barbershop.types";
+
+const VintagePage = lazy(() => import("./templates/vintage"));
 
 function BarbershopPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -54,19 +49,18 @@ function BarbershopPageContent({ slug }: BarbershopPageContentProps) {
   }, [slug]);
 
   if (error) return <p style={{ color: "red", padding: 32 }}>Erro: {error}</p>;
-  if (isLoading) return <LoadingComponent tailwindClass={"h-screen"} backgroundColor={"black"} color={"white"} text={"Carregando"}  />;
+  if (isLoading) return <LoadingComponent tailwindClass={"h-screen"} backgroundColor={"black"} color={"white"} text={"Carregando"} />;
   if (!data) return null;
 
   return (
     <BarberProvider data={data}>
-      <BookingProvider>
-        <Header />
-        <HeroSection />
-        <HoursSection />
-        <TeamSection />
-        <ServicesSection />
-        <ContactSection />
-      </BookingProvider>
+      <Suspense fallback={<LoadingComponent tailwindClass={"h-screen"} backgroundColor={"black"} color={"white"} text={"Carregando"} />}>
+        <VintagePage />
+        {/* Quando novos templates forem criados:
+          {data.template === "modern" && <ModernPage />}
+          {data.template === "minimalist" && <MinimalistPage />}
+        */}
+      </Suspense>
     </BarberProvider>
   );
 }

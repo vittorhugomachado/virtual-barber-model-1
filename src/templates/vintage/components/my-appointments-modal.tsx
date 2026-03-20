@@ -1,13 +1,13 @@
 import { Clock3, Scissors, User, X, ChevronLeft, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useBarbershop } from "../hooks/useBarbershop";
-import { useCustomerAuth } from "../hooks/useCustomerAuth";
+import { useBarbershop } from "../../../hooks/useBarbershop";
+import { useCustomerAuth } from "../../../hooks/useCustomerAuth";
 import {
   cancelCustomerAppointment,
   fetchCustomerAppointments,
   type CustomerAppointmentRecord,
-} from "../services/booking.service";
-import { findCustomerByAuthUser } from "../services/customer-auth.service";
+} from "../../../services/booking.service";
+import { findCustomerByAuthUser } from "../../../services/customer-auth.service";
 
 function formatStoredAppointmentTime(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {

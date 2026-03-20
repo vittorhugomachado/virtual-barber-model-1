@@ -1,13 +1,13 @@
 import { Scissors } from "lucide-react";
-import { useBooking } from "../hooks/useBooking";
-import { useBarbershop } from "../hooks/useBarbershop";
+import { useBooking } from "../../../hooks/useBooking";
+import { useBarbershop } from "../../../hooks/useBarbershop";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "./ui/carousel";
+} from "../../../components/ui/carousel";
 
 export function ServicesSection() {
   const { services, style } = useBarbershop();

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { User, X } from "lucide-react";
-import { useBarbershop } from "../hooks/useBarbershop";
+import { useBarbershop } from "../../../hooks/useBarbershop";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../components/ui/carousel";
-import type { Barber } from "../types/barbershop.types";
+} from "../../../components/ui/carousel";
+import type { Barber } from "../../../types/barbershop.types";
 
 function BarberPortrait({
   barber,

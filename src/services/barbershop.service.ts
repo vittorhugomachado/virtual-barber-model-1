@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { BarbershopData } from "../types/barbershop.types";
+import type { BarbershopData, TemplateId } from "../types/barbershop.types";
 
 type StoreStyleRow = {
   text_color: string;
@@ -89,7 +89,7 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
   const { data, error } = await supabase
     .from("barbershops")
     .select(`
-      id, name, slug, phone, description, logo_url, banner_url,
+      id, name, slug, template, phone, description, logo_url, banner_url,
       store_style ( text_color, background_color, primary_color, text_button_color ),
       social_media ( instagram, facebook, tiktok ),
       addresses ( city, country, street, number, neighborhood, state, zip_code, complement, latitude, longitude ),
@@ -147,10 +147,19 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
     ),
   );
 
+  // TODO: adicionar `template` ao select acima quando a coluna existir no Supabase:
+  // ALTER TABLE barbershops ADD COLUMN template text NOT NULL DEFAULT 'vintage';
+  const VALID_TEMPLATES: TemplateId[] = ["vintage", "modern", "minimalist", "dark"];
+  const rawTemplate = (data as Record<string, unknown>).template;
+  const template: TemplateId = VALID_TEMPLATES.includes(rawTemplate as TemplateId)
+    ? (rawTemplate as TemplateId)
+    : "vintage";
+
   return {
     id: data.id,
     name: data.name,
     slug: data.slug,
+    template,
     phone: data.phone ?? null,
     description: data.description ?? null,
     logo_url: data.logo_url ?? null,

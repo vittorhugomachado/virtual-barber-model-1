@@ -1,3 +1,5 @@
+export type TemplateId = "vintage" | "modern" | "minimalist" | "dark";
+
 export interface StoreStyle {
   text_color: string;
   background_color: string;
@@ -56,6 +58,7 @@ export interface BarbershopData {
   id: string;
   name: string;
   slug: string;
+  template: TemplateId;
   phone?: string | null;
   description?: string | null;
   logo_url?: string | null;

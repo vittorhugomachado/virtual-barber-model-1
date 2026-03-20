@@ -1,5 +1,5 @@
 import { Clock3 } from "lucide-react";
-import { useBarbershop } from "../hooks/useBarbershop";
+import { useBarbershop } from "../../../hooks/useBarbershop";
 
 const WEEK_DAYS = [
   "Domingo",

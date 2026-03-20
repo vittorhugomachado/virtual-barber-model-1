@@ -1,5 +1,5 @@
-import { useBarbershop } from "../hooks/useBarbershop";
-import { useBooking } from "../hooks/useBooking";
+import { useBarbershop } from "../../../hooks/useBarbershop";
+import { useBooking } from "../../../hooks/useBooking";
 
 export function HeroSection() {
   const { banner_url, style } = useBarbershop();

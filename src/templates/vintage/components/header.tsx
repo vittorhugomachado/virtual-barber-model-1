@@ -4,9 +4,9 @@ import {
   CustomerAuthModal,
   type CustomerAuthMode,
 } from "./customer-auth-modal";
-import { useBooking } from "../hooks/useBooking";
-import { useBarbershop } from "../hooks/useBarbershop";
-import { useCustomerAuth } from "../hooks/useCustomerAuth";
+import { useBooking } from "../../../hooks/useBooking";
+import { useBarbershop } from "../../../hooks/useBarbershop";
+import { useCustomerAuth } from "../../../hooks/useCustomerAuth";
 
 function getBreakpoint(name: string): number {
   const len = name.length;

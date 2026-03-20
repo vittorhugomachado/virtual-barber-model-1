@@ -11,10 +11,10 @@ import {
   Store,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BookingContext } from "../context/booking-context";
-import { useBarbershop } from "../hooks/useBarbershop";
-import { useBooking } from "../hooks/useBooking";
-import { useCustomerAuth } from "../hooks/useCustomerAuth";
+import { BookingContext } from "../../../context/booking-context";
+import { useBarbershop } from "../../../hooks/useBarbershop";
+import { useBooking } from "../../../hooks/useBooking";
+import { useCustomerAuth } from "../../../hooks/useCustomerAuth";
 import { CustomerAuthCard, type CustomerAuthMode } from "./customer-auth-modal";
 import { MyAppointmentsModal } from "./my-appointments-modal";
 import {
@@ -36,12 +36,12 @@ import {
   type BarberAvailability,
   type BarberSlot,
   type CreateAppointmentInput,
-} from "../services/booking.service";
+} from "../../../services/booking.service";
 import {
   findCustomerByAuthUser,
   getOrCreateCustomerFromAuth,
-} from "../services/customer-auth.service";
-import { LoadingComponent } from "./loading-component";
+} from "../../../services/customer-auth.service";
+import { LoadingComponent } from "../../../components/loading-component";
 
 type BookingStep = 1 | 2 | 3 | 4;
 type ServiceSelection = {

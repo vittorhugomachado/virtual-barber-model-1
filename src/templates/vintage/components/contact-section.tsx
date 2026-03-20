@@ -2,7 +2,7 @@ import { MapPin, Phone } from "lucide-react";
 import { AiFillTikTok } from "react-icons/ai";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { IoLogoWhatsapp } from "react-icons/io";
-import { useBarbershop } from "../hooks/useBarbershop";
+import { useBarbershop } from "../../../hooks/useBarbershop";
 
 function getSafeExternalUrl(value: string | null | undefined): string | null {
   if (!value) return null;
