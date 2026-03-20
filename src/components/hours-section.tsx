@@ -48,14 +48,11 @@ export function HoursSection() {
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <div
-            style={{ borderColor: `${text_color}30` }}
-            className="border divide-y"
-          >
             {scheduleByDay.map((day) => (
               <div
                 key={day.label}
-                className="flex flex-col gap-3 px-5 py-4 md:flex-row items-center md:justify-between"
+                style={{borderColor: `${text_color}30`}}
+                className="flex flex-col border mb-2 gap-3 px-5 py-4 md:flex-row items-center md:justify-between"
               >
                 <div className="flex items-center justify-center gap-3">
                   <Clock3 style={{ color: primary_color }} className="size-5 shrink-0" />
@@ -87,7 +84,6 @@ export function HoursSection() {
               </div>
             ))}
           </div>
-        </div>
       </div>
     </section>
   );

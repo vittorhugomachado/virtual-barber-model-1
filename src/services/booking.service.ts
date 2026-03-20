@@ -327,6 +327,27 @@ export async function fetchCustomerAppointments({
   });
 }
 
+export async function cancelCustomerAppointment({
+  appointmentId,
+  customerId,
+}: {
+  appointmentId: string;
+  customerId: string;
+}) {
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      status: "cancelled_by_customer",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", appointmentId)
+    .eq("customer_id", customerId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function getOrCreateCustomer({
   barbershopId,
   name,

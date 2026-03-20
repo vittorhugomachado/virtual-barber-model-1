@@ -76,6 +76,14 @@ function getArrayRelation<T>(value: T | T[] | null | undefined): T[] {
   return value ? [value] : [];
 }
 
+function normalizeColorValue(value: string | null | undefined, fallback: string) {
+  if (typeof value !== "string") return fallback;
+
+  const normalizedValue = value.trim().replace(/^['"]+|['"]+$/g, "");
+
+  return normalizedValue || fallback;
+}
+
 export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopData> {
   const { data, error } = await supabase
     .from("barbershops")
@@ -147,10 +155,13 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
     logo_url: data.logo_url ?? null,
     banner_url: data.banner_url ?? null,
     style: {
-      text_color: style.text_color,
-      background_color: style.background_color,
-      primary_color: style.primary_color,
-      text_button_color: style.text_button_color,
+      text_color: normalizeColorValue(style.text_color, "#000000"),
+      background_color: normalizeColorValue(style.background_color, "#FFFFFF"),
+      primary_color: normalizeColorValue(style.primary_color, "#000000"),
+      text_button_color: normalizeColorValue(
+        style.text_button_color,
+        "#FFFFFF",
+      ),
     },
     socialMedia,
     address,

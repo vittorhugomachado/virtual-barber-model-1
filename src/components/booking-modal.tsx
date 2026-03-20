@@ -5,20 +5,19 @@ import {
   ChevronUp,
   ChevronDown,
   Scissors,
-  Trash2,
-  User,
   X,
+  User,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BookingContext } from "../context/booking-context";
 import { useBarbershop } from "../hooks/useBarbershop";
 import { useBooking } from "../hooks/useBooking";
 import { useCustomerAuth } from "../hooks/useCustomerAuth";
+import { MyAppointmentsModal } from "./my-appointments-modal";
 import {
   barberCanPerformServices,
   buildAppointmentDateTime,
   createAppointments,
-  fetchCustomerAppointments,
   fetchAppointmentsForDate,
   fetchBarberAvailability,
   findAdjacentOpenDate,
@@ -34,7 +33,6 @@ import {
   type BarberAvailability,
   type BarberSlot,
   type CreateAppointmentInput,
-  type CustomerAppointmentRecord,
 } from "../services/booking.service";
 import {
   findCustomerByAuthUser,
@@ -124,25 +122,14 @@ function getSlotPeriodGroups(slots: BarberSlot[]) {
   return groups.filter((group) => group.slots.length > 0);
 }
 
-function formatStoredAppointmentTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC",
-  }).format(new Date(value));
-}
-
-function formatAppointmentStatus(status: string | null) {
-  if (!status) return "Sem status";
-
-  const normalizedStatus = status.toLowerCase();
-
-  if (normalizedStatus === "scheduled") return "Agendado";
-  if (normalizedStatus === "completed") return "Concluido";
-  if (normalizedStatus === "cancelled") return "Cancelado";
-
-  return status;
+function SummaryMetaItem({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <p className={`text-xs uppercase ${className}`.trim()}>{children}</p>;
 }
 
 function hasAppointmentConflict(
@@ -248,6 +235,22 @@ function BarberCardImage({
       <User className="size-10 opacity-50" />
     </div>
   );
+}
+
+function getServiceSelectionProgress({
+  durationMinutes,
+  price,
+  barberId,
+  slot,
+}: {
+  durationMinutes: number | null | undefined;
+  price: number | null | undefined;
+  barberId: string | null | undefined;
+  slot: BarberSlot | null | undefined;
+}) {
+  return [durationMinutes != null, price != null, !!barberId, !!slot].filter(
+    Boolean,
+  ).length;
 }
 
 function StepTag({
@@ -385,7 +388,7 @@ function BookingModal({
   initialSelections: ServiceSelection[];
   onClose: () => void;
 }) {
-  const { id, services, barbers, openingHours, style } = useBarbershop();
+  const { id, name, services, barbers, openingHours, style } = useBarbershop();
   const { isLoading, profile, signInWithGoogle } = useCustomerAuth();
   const { openMyAppointmentsModal } = useBooking();
   const { background_color, primary_color, text_color, text_button_color } =
@@ -430,7 +433,6 @@ function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
-  const [isLoadingLinkedCustomer, setIsLoadingLinkedCustomer] = useState(false);
   const [customerAuthMode, setCustomerAuthMode] =
     useState<CustomerAuthMode>("entrar");
   const serviceCardRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -605,7 +607,6 @@ function BookingModal({
     if (!isOpen || !profile) return;
 
     let cancelled = false;
-    setIsLoadingLinkedCustomer(true);
     setAuthError(null);
 
     findCustomerByAuthUser({
@@ -630,7 +631,6 @@ function BookingModal({
       })
       .finally(() => {
         if (cancelled) return;
-        setIsLoadingLinkedCustomer(false);
       });
 
     return () => {
@@ -727,20 +727,6 @@ function BookingModal({
     });
   };
 
-  const removeServiceSelection = (serviceId: string) => {
-    const nextServiceIds = selectedServiceIds.filter(
-      (item) => item !== serviceId,
-    );
-    setSelectedServiceIds(nextServiceIds);
-    syncServiceSelections(nextServiceIds);
-    setSubmitError(null);
-    setSubmitSuccess(null);
-
-    if (nextServiceIds.length === 0) {
-      setStep(2);
-    }
-  };
-
   const scrollToServiceCard = (serviceId: string) => {
     const target = serviceCardRefs.current[serviceId];
     if (!target) return;
@@ -772,7 +758,14 @@ function BookingModal({
       return;
     }
 
-    setExpandedServiceId(serviceId);
+    setExpandedServiceId(null);
+  };
+
+  const handleOpenAppointmentsFromSuccess = () => {
+    onClose();
+    window.setTimeout(() => {
+      openMyAppointmentsModal();
+    }, 0);
   };
 
   const updateServiceSelection = (
@@ -901,7 +894,7 @@ function BookingModal({
             Escolha os serviços
           </h3>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {services.map((service) => {
               const selected = selectedServiceIds.includes(service.id);
 
@@ -977,7 +970,7 @@ function BookingModal({
             Escolha a data
           </h3>
 
-          <div className="flex items-center justify-between">
+          <div className="w-75 mx-auto flex items-center justify-between">
             <button
               type="button"
               onClick={() =>
@@ -1036,7 +1029,7 @@ function BookingModal({
                   disabled={disabled}
                   onClick={() => changeSelectedDate(day.iso)}
                   style={{
-                    borderColor: selected ? primary_color : `${text_color}20`,
+                    borderColor: selected ? primary_color : `${text_color}`,
                     backgroundColor: selected ? primary_color : "transparent",
                     color: selected ? text_button_color : text_color,
                   }}
@@ -1111,8 +1104,17 @@ function BookingModal({
                         )
                       : null;
                     const isExpanded = expandedServiceId === service.id;
-                    const hasCompletedSelection =
-                      !!selection?.barberId && !!selection.slot;
+                    const selectionProgress = getServiceSelectionProgress({
+                      durationMinutes: service.duration_min,
+                      price: service.price,
+                      barberId: selection?.barberId,
+                      slot: selection?.slot,
+                    });
+                    const toggleServiceCard = () => {
+                      setExpandedServiceId((current) =>
+                        current === service.id ? null : service.id,
+                      );
+                    };
 
                     return (
                       <section
@@ -1120,10 +1122,19 @@ function BookingModal({
                         ref={(element) => {
                           serviceCardRefs.current[service.id] = element;
                         }}
-                        style={{ borderColor: `${text_color}24` }}
-                        className="relative max-w-150 space-y-5 border p-3  mx-auto"
+                        style={{ borderColor: `${text_color}` }}
+                        className="relative max-w-150 space-y-5 border  mx-auto"
                       >
-                        <div className="flex gap-3 mb-0 items-start justify-between">
+                        <button
+                          type="button"
+                          onClick={toggleServiceCard}
+                          className="flex w-full cursor-pointer gap-3 pr-14 py-3 pl-3 text-left"
+                          aria-label={
+                            isExpanded
+                              ? `Fechar ${service.name}`
+                              : `Abrir ${service.name}`
+                          }
+                        >
                           <div className="flex items-center">
                             <span
                               style={{
@@ -1138,12 +1149,12 @@ function BookingModal({
                               <h3 className="text-md font-black uppercase tracking-[0.12em]">
                                 {service.name}
                               </h3>
-                              <div className="flex items-center gap-1 -translate-y-1.5">
-                                <p className="text-xs uppercase opacity-70">
+                              <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 -translate-y-1.5">
+                                <SummaryMetaItem className="opacity-70">
                                   {service.duration_min ?? 0} min
-                                </p>
+                                </SummaryMetaItem>
                                 <span style={{ color: text_color }}>|</span>
-                                <p className="text-xs uppercase opacity-70">
+                                <SummaryMetaItem className="opacity-70">
                                   {Number(service.price).toLocaleString(
                                     "pt-BR",
                                     {
@@ -1151,46 +1162,48 @@ function BookingModal({
                                       currency: "BRL",
                                     },
                                   )}
-                                </p>
-                                {hasCompletedSelection && (
-                                  <>
-                                    <span style={{ color: text_color }}>|</span>
-                                    <p className="text-xs uppercase opacity-70">
-                                      {" "}
-                                      {selectedBarber?.name ?? "-"}
-                                    </p>
-                                    <span style={{ color: text_color }}>|</span>
-                                    <p className="text-xs uppercase opacity-70">
-                                      {selection.slot?.startsAt ?? "-"}
-                                    </p>
-                                  </>
-                                )}
+                                </SummaryMetaItem>
+                                <span style={{ color: text_color }}>|</span>
+                                <SummaryMetaItem
+                                  className={
+                                    selectedBarber
+                                      ? "opacity-70"
+                                      : "font-semibold text-red-600"
+                                  }
+                                >
+                                  {selectedBarber?.name ?? "Barbeiro"}
+                                </SummaryMetaItem>
+                                <span style={{ color: text_color }}>|</span>
+                                <SummaryMetaItem
+                                  className={
+                                    selection?.slot
+                                      ? "opacity-70"
+                                      : "font-semibold text-red-600"
+                                  }
+                                >
+                                  {selection?.slot?.startsAt ?? "Horario"}
+                                </SummaryMetaItem>
                               </div>
                             </div>
                           </div>
+                        </button>
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => removeServiceSelection(service.id)}
-                              style={{
-                                color: background_color,
-                              }}
-                              className="inline-flex bg-red-500 my-auto cursor-pointer items-center gap-2 self-start px-3 py-2 text-xs font-black uppercase tracking-[0.2em] transition-opacity hover:opacity-70"
-                            >
-                              <Trash2 className="size-4" />
-                              <span className="hidden md:block">Excluir</span>
-                            </button>
-                          </div>
-                        </div>
+                        <span
+                          className={`absolute top-3 right-3 text-sm font-black uppercase tracking-[0.15em] ${
+                            selectionProgress === 4 ? "text-green-600" : ""
+                          }`}
+                          style={
+                            selectionProgress === 4
+                              ? undefined
+                              : { color: text_color }
+                          }
+                        >
+                          {selectionProgress}/4
+                        </span>
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setExpandedServiceId((current) =>
-                              current === service.id ? null : service.id,
-                            );
-                          }}
+                          onClick={toggleServiceCard}
                           style={{
                             borderColor: `${text_color}30`,
                             color: text_color,
@@ -1210,7 +1223,7 @@ function BookingModal({
                         </button>
 
                         <div
-                          className={`grid transition-all duration-300 ease-out ${
+                          className={`grid transition-all duration-300 px-4 pb-5 ease-out ${
                             isExpanded
                               ? "mt-5 grid-rows-[1fr] opacity-100"
                               : "grid-rows-[0fr] opacity-0"
@@ -1379,14 +1392,22 @@ function BookingModal({
     if (step === 4) {
       return !profile ? (
         <div
-          style={{ borderColor: `${text_color}30` }}
-          className="space-y-5 border p-5"
+          style={{ borderColor: `${text_color}` }}
+          className="mx-auto flex w-full max-w-125 flex-col items-center space-y-6 border px-6 py-8 text-center"
         >
-          <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-            Confirme os dados
-          </h3>
+          <div className="space-y-2">
+            <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
+              Confirmar
+            </h3>
 
-          <div className="flex items-center gap-2">
+            <p className="max-w-90 text-sm uppercase tracking-[0.14em] opacity-70">
+              {customerAuthMode === "entrar"
+                ? "Entre com Google para ver a confirmação e finalizar seu agendamento."
+                : "Cadastre-se com Google para continuar e vincular seu agendamento como cliente."}
+            </p>
+          </div>
+
+          <div className="flex w-full max-w-[320px] items-center justify-center gap-2">
             {(["entrar", "cadastrar"] as const).map((mode) => {
               const active = customerAuthMode === mode;
 
@@ -1400,7 +1421,7 @@ function BookingModal({
                     borderColor: active ? primary_color : `${text_color}30`,
                     color: active ? text_button_color : text_color,
                   }}
-                  className="cursor-pointer border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-opacity hover:opacity-80"
+                  className="flex-1 cursor-pointer border px-4 py-3 text-xs font-black uppercase tracking-[0.2em] transition-all duration-200 hover:opacity-80"
                 >
                   {mode}
                 </button>
@@ -1408,154 +1429,183 @@ function BookingModal({
             })}
           </div>
 
-          <div className="space-y-4">
-            <p className="text-sm uppercase tracking-[0.18em] opacity-70">
-              {customerAuthMode === "entrar"
-                ? "Entre com Google para ver a confirmacao e finalizar seu agendamento."
-                : "Cadastre-se com Google para continuar e vincular seu agendamento como cliente."}
-            </p>
-
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading || isStartingOAuth}
-              style={{ backgroundColor: "#000000", color: "#FFFFFF" }}
-              className="cursor-pointer border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em] disabled:cursor-not-allowed disabled:opacity-40"
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading || isStartingOAuth}
+            style={{ color: text_color }}
+            className="flex w-full max-w-[320px] items-center justify-center gap-3 border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {/* Ícone Google */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 48 48"
+              className="h-5 w-5"
             >
-              {isStartingOAuth ? "Conectando..." : "Google"}
-            </button>
-          </div>
+              <path
+                fill="#FFC107"
+                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 
+      12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 5.1 29 3 24 3 12.9 3 4 11.9 4 
+      23s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.2-.4-3.5z"
+              />
+              <path
+                fill="#FF3D00"
+                d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c3 0 5.7 1.1 
+      7.8 3l5.7-5.7C33.5 5.1 29 3 24 3 16.3 3 9.7 7.4 6.3 14.7z"
+              />
+              <path
+                fill="#4CAF50"
+                d="M24 43c5.2 0 9.9-2 13.5-5.3l-6.2-5.1C29.2 34.5 26.7 35 
+      24 35c-5.3 0-9.7-3.6-11.3-8.5l-6.5 5C9.6 38.7 16.3 43 24 43z"
+              />
+              <path
+                fill="#1976D2"
+                d="M43.6 20.5H42V20H24v8h11.3c-1.1 3-3.4 5.4-6.4 
+      6.9l6.2 5.1C39.9 36.5 44 30.5 44 23c0-1.3-.1-2.2-.4-3.5z"
+              />
+            </svg>
+
+            {isStartingOAuth
+              ? "Conectando..."
+              : customerAuthMode === "entrar"
+                ? "Entrar com Google"
+                : "Cadastrar com Google"}
+          </button>
 
           {authError && (
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
+            <p className="max-w-[320px] text-sm font-semibold tracking-[0.08em] text-red-500">
               {authError}
             </p>
           )}
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div
-            style={{ borderColor: `${text_color}30` }}
-            className="space-y-4 border p-5"
-          >
-            <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-              Confirme os dados
-            </h3>
-
-            <p
-              style={{ color: primary_color }}
-              className="text-xs font-bold uppercase tracking-[0.3em]"
-            >
-              Cliente
-            </p>
-            <div className="space-y-2">
-              <p className="text-sm uppercase opacity-60">Nome</p>
-              <p className="text-lg font-semibold">{customerName}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm uppercase opacity-60">Celular</p>
-              <p className="text-lg font-semibold">{customerPhone}</p>
-            </div>
-            {profile.email && (
-              <div className="space-y-2">
-                <p className="text-sm uppercase opacity-60">Email</p>
-                <p className="text-lg font-semibold">{profile.email}</p>
+        <>
+          {!submitSuccess && (
+            <>
+              <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
+                {submitSuccess ? "Agendado com sucesso" : "Confirme os dados"}
+              </h3>
+              <div
+                style={{ borderColor: `${text_color}30` }}
+                className="space-y-4 border p-5"
+              >
+                <p
+                  style={{ color: primary_color }}
+                  className="text-xs font-bold uppercase tracking-[0.3em]"
+                >
+                  Agendamento
+                </p>
+                <div className="space-y-2">
+                  <p className="text-sm uppercase opacity-60">Servicos</p>
+                  <div className="space-y-3">
+                    {scheduledSelections.map(
+                      ({ service, selection, barber }) => {
+                        return (
+                          <div
+                            key={service.id}
+                            style={{ borderColor: `${text_color}20` }}
+                            className="border p-4"
+                          >
+                            <div className="text-center">
+                              <p className="text-sm uppercase opacity-60">
+                                Serviço
+                              </p>
+                              <p className="text-base font-black uppercase">
+                                {service.name}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="mt-2 text-sm uppercase opacity-60">
+                                Profissional
+                              </p>
+                              <p className="text-base font-semibold">
+                                {barber?.name ?? "-"}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="mt-2 text-sm uppercase opacity-60">
+                                Data
+                              </p>
+                              <p className="text-base font-semibold">
+                                {formatDateLabel(selectedDate)}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="mt-2 text-sm uppercase opacity-60">
+                                Horário
+                              </p>
+                              <p className="text-base font-semibold">
+                                {`${selection.slot.startsAt} - ${selection.slot.endsAt}`}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-            {isLoadingLinkedCustomer && (
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-                Buscando seu cadastro nesta barbearia...
-              </p>
-            )}
-          </div>
+            </>
+          )}
 
-          <div
-            style={{ borderColor: `${text_color}30` }}
-            className="space-y-4 border p-5"
-          >
-            <p
-              style={{ color: primary_color }}
-              className="text-xs font-bold uppercase tracking-[0.3em]"
+          {submitSuccess ? (
+            <div
+              style={{ borderColor: `${text_color}30` }}
+              className=" max-w-150 mx-auto mt-4 lg:col-span-2 border p-5"
             >
-              Reserva
-            </p>
-            <div className="space-y-2">
-              <p className="text-sm uppercase opacity-60">Servicos</p>
-              <div className="space-y-3">
-                {scheduledSelections.map(({ service, selection, barber }) => {
-                  return (
-                    <div
-                      key={service.id}
-                      style={{ borderColor: `${text_color}20` }}
-                      className="border p-4"
-                    >
-                      <p className="text-base font-black uppercase">
-                        {service.name}
-                      </p>
-                      <p className="mt-2 text-sm uppercase opacity-60">
-                        Profissional
-                      </p>
-                      <p className="text-base font-semibold">
-                        {barber?.name ?? "-"}
-                      </p>
-                      <p className="mt-2 text-sm uppercase opacity-60">Data</p>
-                      <p className="text-base font-semibold">
-                        {formatDateLabel(selectedDate)}
-                      </p>
-                      <p className="mt-2 text-sm uppercase opacity-60">
-                        Horário
-                      </p>
-                      <p className="text-base font-semibold">
-                        {`${selection.slot.startsAt} - ${selection.slot.endsAt}`}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{ borderColor: `${text_color}30` }}
-            className="lg:col-span-2 border p-5"
-          >
-            {submitSuccess ? (
-              <div className="space-y-4">
+              <div className="space-y-6 py-6 text-center">
                 <div className="flex items-center justify-center gap-3 text-emerald-500">
                   <CheckCircle2 className="size-6" />
                   <p className="text-sm font-semibold uppercase tracking-[0.2em]">
                     {submitSuccess}
                   </p>
                 </div>
-
                 <div className="flex justify-center">
                   <button
                     type="button"
-                    onClick={openMyAppointmentsModal}
+                    onClick={handleOpenAppointmentsFromSuccess}
                     style={{
-                      backgroundColor: "#000000",
-                      color: "#FFFFFF",
+                      backgroundColor: text_color,
+                      color: background_color,
                     }}
                     className="cursor-pointer border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em]"
                   >
-                    Meus agendamentos
+                    Ver meus agendamentos
                   </button>
                 </div>
               </div>
-            ) : submitError ? (
+            </div>
+          ) : submitError ? (
+            <div
+              style={{ borderColor: `${text_color}30` }}
+              className=" max-w-150 mx-auto mt-4 lg:col-span-2 border p-5"
+            >
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
                 Erro ao agendar: {submitError}. Tente novamente mais tarde.
               </p>
-            ) : null}
-          </div>
-        </div>
+            </div>
+          ) : null}
+        </>
       );
     }
   };
 
   return (
-    <div className="fixed inset-0 z-80 bg-black/70" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70"
+      style={{ zIndex: 300 }}
+      onClick={onClose}
+    >
       <div className="relative mx-auto h-screen w-screen">
+        {submitSuccess && (
+          <h2
+            style={{ color: text_color }}
+            className="absolute top-6 left-1/2 z-10 -translate-x-1/2 px-12 text-center text-2xl font-black uppercase tracking-[0.18em] md:text-3xl"
+          >
+            {name}
+          </h2>
+        )}
+
         <button
           type="button"
           onClick={(event) => {
@@ -1574,25 +1624,43 @@ function BookingModal({
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            if (step > 1) {
-              goBack();
-            } else {
+        {submitSuccess ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
               onClose();
-            }
-          }}
-          style={{
-            borderColor: text_color,
-            color: text_color,
-            backgroundColor: background_color,
-          }}
-          className="absolute top-4 left-6 z-10 border px-2 py-2 text-sm font-black uppercase cursor-pointer tracking-[0.2em]"
-        >
-          <ChevronLeft />
-        </button>
+            }}
+            style={{
+              borderColor: text_color,
+              color: text_color,
+              backgroundColor: background_color,
+            }}
+            className="absolute top-4 left-6 z-10 border px-2 py-2 text-sm font-black uppercase cursor-pointer tracking-[0.2em]"
+          >
+            <ChevronLeft />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (step > 1) {
+                goBack();
+              } else {
+                onClose();
+              }
+            }}
+            style={{
+              borderColor: text_color,
+              color: text_color,
+              backgroundColor: background_color,
+            }}
+            className="absolute top-4 left-6 z-10 border px-2 py-2 text-sm font-black uppercase cursor-pointer tracking-[0.2em]"
+          >
+            <ChevronLeft />
+          </button>
+        )}
 
         <div
           style={{ backgroundColor: background_color, color: text_color }}
@@ -1644,170 +1712,21 @@ function BookingModal({
                 >
                   Continuar
                 </button>
-              ) : (
+              ) : !submitSuccess ? (
                 <button
                   type="button"
                   onClick={handleFinalize}
                   disabled={!canFinalize}
                   style={{
-                    backgroundColor: "#000000",
-                    color: "#FFFFFF",
+                    backgroundColor: text_color,
+                    color: background_color,
                     opacity: canFinalize ? 1 : 0.4,
                   }}
                   className="border fixed bottom-4  border-black cursor-pointer px-6 py-3 text-sm font-black uppercase tracking-[0.25em] disabled:cursor-not-allowed"
                 >
-                  {isSubmitting
-                    ? "Finalizando..."
-                    : submitSuccess
-                      ? "Agendado"
-                      : "Finalizar"}
+                  {isSubmitting ? "Finalizando..." : "Finalizar"}
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MyAppointmentsModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const { id, style } = useBarbershop();
-  const { profile } = useCustomerAuth();
-  const { background_color, text_color, primary_color } = style;
-  const [appointments, setAppointments] = useState<CustomerAppointmentRecord[]>(
-    [],
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!isOpen || !profile) return;
-
-    let cancelled = false;
-
-    findCustomerByAuthUser({
-      barbershopId: id,
-      authUserId: profile.authUserId,
-    })
-      .then((customer) => {
-        if (cancelled) return null;
-        if (!customer) {
-          throw new Error("Cliente nao encontrado para esta conta.");
-        }
-
-        return fetchCustomerAppointments({
-          barbershopId: id,
-          customerId: customer.id,
-        });
-      })
-      .then((result) => {
-        if (cancelled || !result) return;
-        setError(null);
-        setAppointments(result);
-      })
-      .catch((fetchError: Error) => {
-        if (cancelled) return;
-        setError(fetchError.message);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, isOpen, profile]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-90 bg-black/70" onClick={onClose}>
-      <div className="relative mx-auto h-screen w-screen">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClose();
-          }}
-          style={{ backgroundColor: background_color, color: text_color }}
-          className="absolute top-4 left-6 z-10 border px-2 py-2 text-sm font-black uppercase cursor-pointer tracking-[0.2em]"
-        >
-          <ChevronLeft />
-        </button>
-
-        <div
-          style={{ backgroundColor: background_color, color: text_color }}
-          className="relative h-full w-full overflow-hidden"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="flex h-full flex-col overflow-y-auto px-6 pb-8 pt-24 md:px-10">
-            <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-              Meus agendamentos
-            </h3>
-
-            <div
-              style={{ borderColor: `${text_color}30` }}
-              className="mt-8 space-y-4 border p-5"
-            >
-              {isLoading ? (
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-                  Carregando agendamentos...
-                </p>
-              ) : error ? (
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
-                  {error}
-                </p>
-              ) : appointments.length === 0 ? (
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-                  Nenhum agendamento encontrado.
-                </p>
-              ) : (
-                appointments.map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    style={{ borderColor: `${text_color}20` }}
-                    className="border p-4"
-                  >
-                    <p
-                      style={{ color: primary_color }}
-                      className="text-xs font-bold uppercase tracking-[0.3em]"
-                    >
-                      {`${formatStoredAppointmentTime(
-                        appointment.starts_at,
-                      )} - ${formatStoredAppointmentTime(appointment.ends_at)}`}
-                    </p>
-                    <p className="mt-3 text-lg font-black uppercase">
-                      {appointment.service?.name ?? "Servico"}
-                    </p>
-                    <p className="mt-2 text-sm uppercase opacity-70">
-                      Barbeiro: {appointment.barber?.name ?? "-"}
-                    </p>
-                    <p className="mt-2 text-sm uppercase opacity-70">
-                      Preco:{" "}
-                      {appointment.service?.price != null
-                        ? Number(appointment.service.price).toLocaleString(
-                            "pt-BR",
-                            {
-                              style: "currency",
-                              currency: "BRL",
-                            },
-                          )
-                        : "-"}
-                    </p>
-                    <p className="mt-2 text-sm uppercase opacity-70">
-                      Status: {formatAppointmentStatus(appointment.status)}
-                    </p>
-                  </div>
-                ))
-              )}
+              ) : null}
             </div>
           </div>
         </div>
