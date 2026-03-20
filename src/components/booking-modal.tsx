@@ -13,6 +13,7 @@ import { BookingContext } from "../context/booking-context";
 import { useBarbershop } from "../hooks/useBarbershop";
 import { useBooking } from "../hooks/useBooking";
 import { useCustomerAuth } from "../hooks/useCustomerAuth";
+import { CustomerAuthCard, type CustomerAuthMode } from "./customer-auth-modal";
 import { MyAppointmentsModal } from "./my-appointments-modal";
 import {
   barberCanPerformServices,
@@ -50,7 +51,6 @@ type CompletedServiceSelection = {
   barberId: string;
   slot: BarberSlot;
 };
-type CustomerAuthMode = "entrar" | "cadastrar";
 type BookingResumePayload = {
   serviceIds: string[];
   selectedDate: string | null;
@@ -1118,17 +1118,17 @@ function BookingModal({
 
                     return (
                       <section
+                        onClick={toggleServiceCard}
                         key={service.id}
                         ref={(element) => {
                           serviceCardRefs.current[service.id] = element;
                         }}
                         style={{ borderColor: `${text_color}` }}
-                        className="relative max-w-150 space-y-5 border  mx-auto"
+                        className="relative cursor-pointer mx-auto max-w-150 space-y-5 border"
                       >
                         <button
                           type="button"
-                          onClick={toggleServiceCard}
-                          className="flex w-full cursor-pointer gap-3 pr-14 py-3 pl-3 text-left"
+                          className="flex w-full cursor-pointer gap-3 mb-0 pr-14 pt-3 pb-6 pl-3 text-left"
                           aria-label={
                             isExpanded
                               ? `Fechar ${service.name}`
@@ -1186,6 +1186,20 @@ function BookingModal({
                               </div>
                             </div>
                           </div>
+                          <span
+                            style={{
+                              borderColor: `${text_color}30`,
+                              color: text_color,
+                            }}
+                            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 px-3 transition-opacity"
+                            aria-hidden="true"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="size-4" />
+                            ) : (
+                              <ChevronUp className="size-4" />
+                            )}
+                          </span>
                         </button>
 
                         <span
@@ -1201,31 +1215,10 @@ function BookingModal({
                           {selectionProgress}/4
                         </span>
 
-                        <button
-                          type="button"
-                          onClick={toggleServiceCard}
-                          style={{
-                            borderColor: `${text_color}30`,
-                            color: text_color,
-                          }}
-                          className="absolute bottom-0 mb-2 left-1/2 -translate-x-1/2 cursor-pointer px-3 transition-opacity hover:opacity-70"
-                          aria-label={
-                            isExpanded
-                              ? `Fechar ${service.name}`
-                              : `Abrir ${service.name}`
-                          }
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="size-4" />
-                          ) : (
-                            <ChevronUp className="size-4" />
-                          )}
-                        </button>
-
                         <div
-                          className={`grid transition-all duration-300 px-4 pb-5 ease-out ${
+                          className={`grid transition-all duration-300 px-4 pb-0 ease-out ${
                             isExpanded
-                              ? "mt-5 grid-rows-[1fr] opacity-100"
+                              ? "mt-5 grid-rows-[1fr] opacity-100 pb-5"
                               : "grid-rows-[0fr] opacity-0"
                           }`}
                         >
@@ -1258,13 +1251,14 @@ function BookingModal({
                                   >
                                     <button
                                       type="button"
-                                      onClick={() =>
+                                      onClick={(event) => {
+                                        event.stopPropagation();
                                         updateServiceSelection(service.id, {
                                           barberId: entry.barber.id,
                                           slot: null,
-                                        })
-                                      }
-                                      className="flex h-20 w-full cursor-pointer overflow-hidden text-left lg:items-stretch"
+                                        });
+                                      }}
+                                      className="flex h-20 w-full z-60 cursor-pointer overflow-hidden text-left lg:items-stretch"
                                     >
                                       <BarberCardImage
                                         name={entry.barber.name}
@@ -1295,6 +1289,9 @@ function BookingModal({
 
                                     {selected && (
                                       <div
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
                                         style={{
                                           borderTopColor: `${text_color}20`,
                                         }}
@@ -1391,93 +1388,16 @@ function BookingModal({
 
     if (step === 4) {
       return !profile ? (
-        <div
-          style={{ borderColor: `${text_color}` }}
-          className="mx-auto flex w-full max-w-125 flex-col items-center space-y-6 border px-6 py-8 text-center"
-        >
-          <div className="space-y-2">
-            <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-              Confirmar
-            </h3>
-
-            <p className="max-w-90 text-sm uppercase tracking-[0.14em] opacity-70">
-              {customerAuthMode === "entrar"
-                ? "Entre com Google para ver a confirmação e finalizar seu agendamento."
-                : "Cadastre-se com Google para continuar e vincular seu agendamento como cliente."}
-            </p>
-          </div>
-
-          <div className="flex w-full max-w-[320px] items-center justify-center gap-2">
-            {(["entrar", "cadastrar"] as const).map((mode) => {
-              const active = customerAuthMode === mode;
-
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setCustomerAuthMode(mode)}
-                  style={{
-                    backgroundColor: active ? primary_color : "transparent",
-                    borderColor: active ? primary_color : `${text_color}30`,
-                    color: active ? text_button_color : text_color,
-                  }}
-                  className="flex-1 cursor-pointer border px-4 py-3 text-xs font-black uppercase tracking-[0.2em] transition-all duration-200 hover:opacity-80"
-                >
-                  {mode}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isLoading || isStartingOAuth}
-            style={{ color: text_color }}
-            className="flex w-full max-w-[320px] items-center justify-center gap-3 border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {/* Ícone Google */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 48 48"
-              className="h-5 w-5"
-            >
-              <path
-                fill="#FFC107"
-                d="M43.6 20.5H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 
-      12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 5.1 29 3 24 3 12.9 3 4 11.9 4 
-      23s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.2-.4-3.5z"
-              />
-              <path
-                fill="#FF3D00"
-                d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c3 0 5.7 1.1 
-      7.8 3l5.7-5.7C33.5 5.1 29 3 24 3 16.3 3 9.7 7.4 6.3 14.7z"
-              />
-              <path
-                fill="#4CAF50"
-                d="M24 43c5.2 0 9.9-2 13.5-5.3l-6.2-5.1C29.2 34.5 26.7 35 
-      24 35c-5.3 0-9.7-3.6-11.3-8.5l-6.5 5C9.6 38.7 16.3 43 24 43z"
-              />
-              <path
-                fill="#1976D2"
-                d="M43.6 20.5H42V20H24v8h11.3c-1.1 3-3.4 5.4-6.4 
-      6.9l6.2 5.1C39.9 36.5 44 30.5 44 23c0-1.3-.1-2.2-.4-3.5z"
-              />
-            </svg>
-
-            {isStartingOAuth
-              ? "Conectando..."
-              : customerAuthMode === "entrar"
-                ? "Entrar com Google"
-                : "Cadastrar com Google"}
-          </button>
-
-          {authError && (
-            <p className="max-w-[320px] text-sm font-semibold tracking-[0.08em] text-red-500">
-              {authError}
-            </p>
-          )}
-        </div>
+        <CustomerAuthCard
+          mode={customerAuthMode}
+          isLoading={isLoading || isStartingOAuth}
+          error={authError}
+          textColor={text_color}
+          primaryColor={primary_color}
+          textButtonColor={text_button_color}
+          onChangeMode={setCustomerAuthMode}
+          onContinueWithGoogle={handleGoogleLogin}
+        />
       ) : (
         <>
           {!submitSuccess && (

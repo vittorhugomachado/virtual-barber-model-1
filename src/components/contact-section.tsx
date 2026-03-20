@@ -72,11 +72,11 @@ export function ContactSection() {
           </h2>
         </div>
 
-        <div className="gap-8 lg:items-stretch">
+        <div className="gap-8 flex flex-col-reverse lg:flex-row lg:gap-0 lg:items-stretch lg:justify-center">
           {mapUrl && (
             <div
               style={{ borderColor: `${text_color}30` }}
-              className="overflow-hidden border min-h-80"
+              className="overflow-hidden border min-h-80 w-full max-w-125 mx-auto lg:mx-0"
             >
               <iframe
                 title="Mapa da barbearia"
@@ -91,7 +91,7 @@ export function ContactSection() {
           <div
             className="flex flex-col justify-between items-center gap-8 p-6 md:p-8"
           >
-            <div className="flex justify-center space-y-6">
+            <div className="flex flex-col justify-center space-y-6">
               {fullAddress && (
                 <div className="flex items-start gap-4">
                   <MapPin
@@ -99,10 +99,10 @@ export function ContactSection() {
                     className="mt-1 size-6 shrink-0"
                   />
                   <div>
-                    <p className="mb-1 text-xs font-bold uppercase tracking-widest opacity-50">
+                    <p className="mb-1 text-xs uppercase tracking-widest opacity-50">
                       Endereco
                     </p>
-                    <p className="text-lg font-semibold leading-relaxed">
+                    <p className="text-lgleading-relaxed">
                       {fullAddress}
                     </p>
                   </div>
@@ -116,11 +116,11 @@ export function ContactSection() {
                     className="mt-1 size-6 shrink-0"
                   />
                   <div>
-                    <p className="mb-1 text-xs font-bold uppercase tracking-widest opacity-50">
+                    <p className="mb-1 text-xs uppercase tracking-widest opacity-50">
                       Telefone
                     </p>
                     <p
-                      className="text-lg font-semibold transition-opacity hover:opacity-70"
+                      className="text-lg transition-opacity hover:opacity-70"
                     >
                       {phone}
                     </p>
@@ -129,7 +129,7 @@ export function ContactSection() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap justify-start w-full gap-6">
               {phone && (
                 <a
                   href={`https://wa.me/55${phone.replace(/\D/g, "")}`}

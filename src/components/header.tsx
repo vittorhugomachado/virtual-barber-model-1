@@ -1,5 +1,9 @@
 import { LogIn, LogOut, User, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  CustomerAuthModal,
+  type CustomerAuthMode,
+} from "./customer-auth-modal";
 import { useBooking } from "../hooks/useBooking";
 import { useBarbershop } from "../hooks/useBarbershop";
 import { useCustomerAuth } from "../hooks/useCustomerAuth";
@@ -17,12 +21,12 @@ export function Header() {
   const { name, style } = useBarbershop();
   const { openBookingModal, openMyAppointmentsModal } = useBooking();
   const { profile, signInWithGoogle, signOut } = useCustomerAuth();
-  const { text_color, background_color, primary_color } = style;
+  const { text_color, background_color, primary_color, text_button_color } =
+    style;
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<"entrar" | "cadastrar">(
-    "entrar",
-  );
+  const [authModalMode, setAuthModalMode] =
+    useState<CustomerAuthMode>("entrar");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
@@ -372,6 +376,7 @@ export function Header() {
           textColor={text_color}
           backgroundColor={background_color}
           primaryColor={primary_color}
+          textButtonColor={text_button_color}
           onClose={() => {
             setIsAuthModalOpen(false);
             setIsStartingOAuth(false);
@@ -384,110 +389,5 @@ export function Header() {
         />
       </header>
     </>
-  );
-}
-
-function CustomerAuthModal({
-  isOpen,
-  mode,
-  isLoading,
-  error,
-  textColor,
-  backgroundColor,
-  primaryColor,
-  onClose,
-  onChangeMode,
-  onContinueWithGoogle,
-}: {
-  isOpen: boolean;
-  mode: "entrar" | "cadastrar";
-  isLoading: boolean;
-  error: string | null;
-  textColor: string;
-  backgroundColor: string;
-  primaryColor: string;
-  onClose: () => void;
-  onChangeMode: (mode: "entrar" | "cadastrar") => void;
-  onContinueWithGoogle: () => void;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-80 bg-black/70" onClick={onClose}>
-      <div className="relative mx-auto h-screen w-screen">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClose();
-          }}
-          style={{ color: textColor, borderColor: textColor }}
-          className="absolute right-6 top-4 z-10 cursor-pointer border px-4 py-3 text-sm font-black uppercase tracking-[0.2em]"
-        >
-          x
-        </button>
-
-        <div
-          style={{ backgroundColor, color: textColor }}
-          className="relative flex h-full w-full items-center justify-center overflow-hidden px-6"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div
-            style={{ borderColor: `${textColor}30` }}
-            className="w-full max-w-xl border p-6 md:p-8"
-          >
-            <h2 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-              {mode === "entrar" ? "Entrar" : "Criar conta"}
-            </h2>
-
-            <div className="mt-6 flex items-center justify-center gap-2">
-              {(["entrar", "cadastrar"] as const).map((item) => {
-                const active = item === mode;
-
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => onChangeMode(item)}
-                    style={{
-                      backgroundColor: active ? primaryColor : "transparent",
-                      borderColor: active ? primaryColor : `${textColor}30`,
-                      color: active ? backgroundColor : textColor,
-                    }}
-                    className="cursor-pointer border px-4 py-2 text-xs font-black uppercase tracking-[0.2em]"
-                  >
-                    {item === "entrar" ? "Entrar" : "Criar conta"}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="mt-6 text-center text-sm uppercase tracking-[0.16em] opacity-70">
-              {mode === "entrar"
-                ? "Entre com Google para acessar seus agendamentos."
-                : "Crie sua conta com Google para acompanhar seus agendamentos."}
-            </p>
-
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={onContinueWithGoogle}
-                disabled={isLoading}
-                style={{ backgroundColor: "#000000", color: "#FFFFFF" }}
-                className="cursor-pointer border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {isLoading ? "Conectando..." : "Continuar com Google"}
-              </button>
-            </div>
-
-            {error && (
-              <p className="mt-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
-                {error}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
