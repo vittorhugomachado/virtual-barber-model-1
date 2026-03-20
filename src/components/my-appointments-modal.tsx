@@ -57,6 +57,8 @@ export function MyAppointmentsModal({
   const [isLoading, setIsLoading] = useState(true);
   const [isCancellingId, setIsCancellingId] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [pendingCancelAppointment, setPendingCancelAppointment] =
+    useState<CustomerAppointmentRecord | null>(null);
 
   const loadAppointments = useCallback(
     async (authUserId: string) => {
@@ -145,6 +147,7 @@ export function MyAppointmentsModal({
       );
     } finally {
       setIsCancellingId(null);
+      setPendingCancelAppointment(null);
     }
   };
 
@@ -319,7 +322,7 @@ export function MyAppointmentsModal({
                       {isScheduled && (
                         <button
                           type="button"
-                          onClick={() => handleCancelAppointment(appointment.id)}
+                          onClick={() => setPendingCancelAppointment(appointment)}
                           disabled={isCancellingId === appointment.id}
                           className="cursor-pointer px-3 py-2 text-xs tracking-[0.18em] text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -335,6 +338,128 @@ export function MyAppointmentsModal({
             </div>
           </div>
         </div>
+
+        {pendingCancelAppointment && (
+          <div
+            className="absolute w-full h-full flex items-center inset-0 z-20 bg-black/70"
+            onClick={() => setPendingCancelAppointment(null)}
+          >
+            <div
+              style={{
+                backgroundColor: background_color,
+                color: text_color,
+                borderColor: `${text_color}30`,
+              }}
+              className="mx-auto my-auto w-[calc(100%-2rem)] max-w-xl border p-6 text-center"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h4 className="text-lg font-black uppercase tracking-[0.18em]">
+                Confirmar cancelamento
+              </h4>
+
+              <p className="mt-4 text-sm uppercase tracking-[0.14em] opacity-70">
+                Voce deseja cancelar este agendamento?
+              </p>
+
+              <div
+                style={{ borderColor: `${text_color}20` }}
+                className="mt-6 flex flex-col gap-3 border px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
+              >
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex items-center gap-1 text-sm shrink-0">
+                      <span
+                        style={{ color: text_color }}
+                        className="font-semibold uppercase tracking-[0.18em]"
+                      >
+                        {formatStoredAppointmentDate(
+                          pendingCancelAppointment.starts_at,
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-sm shrink-0">
+                      <Clock3
+                        style={{ color: primary_color }}
+                        className="h-3.5 w-3.5 shrink-0"
+                      />
+                      <span className="font-medium">
+                        {formatStoredAppointmentTime(
+                          pendingCancelAppointment.starts_at,
+                        )}
+                      </span>
+                      <span className="opacity-50">-</span>
+                      <span className="opacity-70">
+                        {formatStoredAppointmentTime(
+                          pendingCancelAppointment.ends_at,
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex min-w-0 items-center gap-1.5 text-sm overflow-hidden">
+                      <User
+                        style={{ color: primary_color }}
+                        className="h-3.5 w-3.5 shrink-0"
+                      />
+                      <span className="truncate font-medium">
+                        {pendingCancelAppointment.barber?.name ?? "Barbeiro"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm">
+                    <Scissors
+                      style={{ color: primary_color }}
+                      className="h-3.5 w-3.5 shrink-0"
+                    />
+                    <span className="truncate opacity-80">
+                      {pendingCancelAppointment.service?.name ?? "Servico"}
+                    </span>
+                    <span className="opacity-50">-</span>
+                    <span className="font-semibold">
+                      {pendingCancelAppointment.service?.price != null
+                        ? Number(
+                            pendingCancelAppointment.service.price,
+                          ).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })
+                        : "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPendingCancelAppointment(null)}
+                  className="cursor-pointer border px-4 py-3 text-xs font-black uppercase tracking-[0.18em]"
+                  style={{ borderColor: `${text_color}30`, color: text_color }}
+                >
+                  Voltar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCancelAppointment(pendingCancelAppointment.id)
+                  }
+                  disabled={isCancellingId === pendingCancelAppointment.id}
+                  className="cursor-pointer border px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{
+                    borderColor: "#DC2626",
+                    backgroundColor: "#DC2626",
+                  }}
+                >
+                  {isCancellingId === pendingCancelAppointment.id
+                    ? "Cancelando..."
+                    : "Confirmar cancelamento"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

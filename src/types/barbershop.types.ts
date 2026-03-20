@@ -31,6 +31,7 @@ export interface Barber {
 }
 
 export interface Address {
+  city: string | null;
   country?: string | null;
   street: string;
   number: string;

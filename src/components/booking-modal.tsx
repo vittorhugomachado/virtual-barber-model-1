@@ -397,7 +397,7 @@ function BookingModal({
   initialSelections: ServiceSelection[];
   onClose: () => void;
 }) {
-  const { id, name, services, barbers, openingHours, style } = useBarbershop();
+  const { id, services, barbers, openingHours, style } = useBarbershop();
   const { isLoading, profile, signInWithGoogle } = useCustomerAuth();
   const { openMyAppointmentsModal } = useBooking();
   const { background_color, primary_color, text_color, text_button_color } =
@@ -492,6 +492,15 @@ function BookingModal({
             right.selection.slot.startMinutes,
         ),
     [barbers, selectedServicesWithSelections],
+  );
+
+  const totalSelectedPrice = useMemo(
+    () =>
+      selectedServices.reduce(
+        (total, service) => total + Number(service.price ?? 0),
+        0,
+      ),
+    [selectedServices],
   );
 
   const availableBarbersByService = useMemo(() => {
@@ -1286,9 +1295,9 @@ function BookingModal({
                                       />
 
                                       <div className="flex flex-1 flex-col justify-between gap-3 p-4 lg:p-5">
-                                          <p className="text-lg font-black uppercase lg:text-xl">
-                                            {entry.barber.name}
-                                          </p>
+                                        <p className="text-lg font-black uppercase lg:text-xl">
+                                          {entry.barber.name}
+                                        </p>
                                       </div>
                                     </button>
 
@@ -1424,13 +1433,16 @@ function BookingModal({
                 style={{ borderColor: `${text_color}30` }}
                 className="space-y-4 border p-5"
               >
-                <p
-                  style={{ color: primary_color }}
-                  className="text-xs font-bold uppercase tracking-[0.3em]"
-                >
-                  Agendamento
-                </p>
                 <div className="space-y-3">
+                  <div className="flex justify-center lg:justify-start">
+                    <span
+                      style={{ color: text_color }}
+                      className="text-sm font-semibold uppercase tracking-[0.18em]"
+                    >
+                      {formatDateLabel(selectedDate)}
+                    </span>
+                  </div>
+
                   {scheduledSelections.map(({ service, selection, barber }) => (
                     <div
                       key={service.id}
@@ -1438,13 +1450,6 @@ function BookingModal({
                       className="flex flex-col gap-3 border px-4 py-4"
                     >
                       <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                        <span
-                          style={{ color: text_color }}
-                          className="text-sm font-semibold uppercase tracking-[0.18em]"
-                        >
-                          {formatDateLabel(selectedDate)}
-                        </span>
-
                         <div className="flex items-center gap-1 text-sm shrink-0">
                           <Clock3
                             style={{ color: primary_color }}
@@ -1490,11 +1495,23 @@ function BookingModal({
                       </div>
                     </div>
                   ))}
+
+                  <div
+                    style={{ borderColor: `${text_color}20` }}
+                    className="flex items-center justify-between border-t pt-4"
+                  >
+                    <span className="text-sm uppercase opacity-70">Total</span>
+                    <span className="text-base font-black uppercase">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(totalSelectedPrice)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </>
           )}
-
 
           {submitSuccess ? (
             <div
@@ -1502,7 +1519,7 @@ function BookingModal({
               className=" max-w-150 mx-auto mt-4 lg:col-span-2 border p-5"
             >
               <div className="space-y-6 py-6 text-center">
-                <div className="flex items-center justify-center gap-3 text-emerald-500">
+                <div className="flex flex-col items-center justify-center gap-3 text-emerald-500">
                   <CheckCircle2 className="size-6" />
                   <p className="text-sm font-semibold uppercase tracking-[0.2em]">
                     {submitSuccess}
@@ -1545,15 +1562,6 @@ function BookingModal({
       onClick={onClose}
     >
       <div className="relative mx-auto h-screen w-screen">
-        {submitSuccess && (
-          <h2
-            style={{ color: text_color }}
-            className="absolute top-6 left-1/2 z-10 -translate-x-1/2 px-12 text-center text-2xl font-black uppercase tracking-[0.18em] md:text-3xl"
-          >
-            {name}
-          </h2>
-        )}
-
         <button
           type="button"
           onClick={(event) => {

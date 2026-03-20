@@ -39,6 +39,7 @@ export function ContactSection() {
   const tiktokUrl = getSafeExternalUrl(socialMedia?.tiktok);
 
   const addressParts = [
+    address?.city,
     address?.street,
     address?.number,
     address?.neighborhood,
@@ -103,7 +104,9 @@ export function ContactSection() {
                       Endereco
                     </p>
                     <p className="text-lgleading-relaxed">
-                      {fullAddress}
+                      {address?.city}, {address?.state} <br />
+                      {address?.street}, {address?.number} <br />
+                      {address?.neighborhood}
                     </p>
                   </div>
                 </div>

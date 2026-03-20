@@ -15,6 +15,7 @@ type SocialMediaRow = {
 };
 
 type AddressRow = {
+  city: string | null;
   country?: string | null;
   street: string;
   number: string;
@@ -91,7 +92,7 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
       id, name, slug, phone, description, logo_url, banner_url,
       store_style ( text_color, background_color, primary_color, text_button_color ),
       social_media ( instagram, facebook, tiktok ),
-      addresses ( country, street, number, neighborhood, state, zip_code, complement, latitude, longitude ),
+      addresses ( city, country, street, number, neighborhood, state, zip_code, complement, latitude, longitude ),
       opening_hours ( id, day_of_week, opens_at, closes_at, period_order, is_open ),
       services ( id, name, image_url, description, duration_min, price ),
       barbers (
