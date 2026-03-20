@@ -7,6 +7,7 @@ import {
   Scissors,
   X,
   User,
+  Store,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BookingContext } from "../context/booking-context";
@@ -16,12 +17,12 @@ import { useCustomerAuth } from "../hooks/useCustomerAuth";
 import { CustomerAuthCard, type CustomerAuthMode } from "./customer-auth-modal";
 import { MyAppointmentsModal } from "./my-appointments-modal";
 import {
+  addDays,
   barberCanPerformServices,
   buildAppointmentDateTime,
   createAppointments,
   fetchAppointmentsForDate,
   fetchBarberAvailability,
-  findAdjacentOpenDate,
   findNextOpenDate,
   formatDateLabel,
   formatMonthLabel,
@@ -39,6 +40,7 @@ import {
   findCustomerByAuthUser,
   getOrCreateCustomerFromAuth,
 } from "../services/customer-auth.service";
+import { LoadingComponent } from "./loading-component";
 
 type BookingStep = 1 | 2 | 3 | 4;
 type ServiceSelection = {
@@ -77,6 +79,12 @@ function formatPhone(value: string) {
 function getMonthStart(date: string) {
   const value = new Date(`${date}T12:00:00`);
   return new Date(value.getFullYear(), value.getMonth(), 1);
+}
+
+function formatWeekdayLabel(date: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+  }).format(new Date(`${date}T12:00:00`));
 }
 
 function getDisplayedMinutesFromSlotLabel(label: string) {
@@ -436,7 +444,6 @@ function BookingModal({
   const [customerAuthMode, setCustomerAuthMode] =
     useState<CustomerAuthMode>("entrar");
   const serviceCardRefs = useRef<Record<string, HTMLElement | null>>({});
-
   const selectedServices = useMemo(
     () => services.filter((service) => selectedServiceIds.includes(service.id)),
     [selectedServiceIds, services],
@@ -677,6 +684,7 @@ function BookingModal({
   const availabilityLoading = availability === null && !availabilityError;
   const appointmentsLoading =
     step >= 3 && appointments === null && !appointmentsError;
+  const isSelectedDateOpen = isDateOpen(openingHours, selectedDate);
 
   const syncServiceSelections = (serviceIds: string[]) => {
     setServiceSelections((current) => {
@@ -798,11 +806,12 @@ function BookingModal({
   };
 
   const moveDate = (direction: 1 | -1) => {
-    const nextDate = findAdjacentOpenDate(
-      openingHours,
-      selectedDate,
-      direction,
-    );
+    const nextDate = addDays(selectedDate, direction);
+
+    if (direction < 0 && nextDate < today) {
+      return;
+    }
+
     changeSelectedDate(nextDate);
   };
 
@@ -1081,9 +1090,18 @@ function BookingModal({
             </button>
           </div>
 
-          {availabilityLoading || appointmentsLoading ? (
+          {!isSelectedDateOpen ? (
+            <p className="flex flex-col text-center gap-2 py-5 items-center text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
+              <Store size={56} />
+              {`Barbearia nao abre na ${formatWeekdayLabel(selectedDate)}.`}
+            </p>
+          ) : availabilityLoading || appointmentsLoading ? (
             <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-              Carregando disponibilidade...
+              <LoadingComponent
+                backgroundColor={background_color}
+                color={text_color}
+                text="buscando profissionais"
+              />
             </p>
           ) : availabilityError || appointmentsError ? (
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
@@ -1267,23 +1285,9 @@ function BookingModal({
                                       />
 
                                       <div className="flex flex-1 flex-col justify-between gap-3 p-4 lg:p-5">
-                                        <div>
                                           <p className="text-lg font-black uppercase lg:text-xl">
                                             {entry.barber.name}
                                           </p>
-                                        </div>
-
-                                        <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em]">
-                                          <span>
-                                            {availableBarberSlots.length}{" "}
-                                            horários livres
-                                          </span>
-                                          <span>
-                                            {availableBarberSlots.length > 0
-                                              ? "Disponível"
-                                              : "Indisponível"}
-                                          </span>
-                                        </div>
                                       </div>
                                     </button>
 
@@ -1387,6 +1391,16 @@ function BookingModal({
     }
 
     if (step === 4) {
+      if (isLoading && !profile) {
+        return (
+          <div className="mx-auto flex w-full max-w-125 items-center justify-center border px-6 py-8 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
+              Carregando autenticacao...
+            </p>
+          </div>
+        );
+      }
+
       return !profile ? (
         <CustomerAuthCard
           mode={customerAuthMode}

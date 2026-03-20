@@ -70,10 +70,14 @@ export function onCustomerAuthChange(
 }
 
 export async function signInCustomerWithGoogle(redirectTo: string) {
+  const normalizedRedirectUrl = new URL(redirectTo);
+  normalizedRedirectUrl.search = "";
+  normalizedRedirectUrl.hash = "";
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo,
+      redirectTo: normalizedRedirectUrl.toString(),
       queryParams: {
         prompt: "select_account",
       },

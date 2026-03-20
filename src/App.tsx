@@ -54,7 +54,7 @@ function BarbershopPageContent({ slug }: BarbershopPageContentProps) {
   }, [slug]);
 
   if (error) return <p style={{ color: "red", padding: 32 }}>Erro: {error}</p>;
-  if (isLoading) return <LoadingComponent />;
+  if (isLoading) return <LoadingComponent tailwindClass={"h-screen"} backgroundColor={"black"} color={"white"} text={"Carregando"}  />;
   if (!data) return null;
 
   return (
