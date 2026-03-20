@@ -112,6 +112,17 @@ export function MyAppointmentsModal({
     };
   }, [isOpen, loadAppointments, profile]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   const handleCancelAppointment = async (appointmentId: string) => {
     if (!profile?.authUserId || !customerId || isCancellingId) return;
 
@@ -178,10 +189,10 @@ export function MyAppointmentsModal({
 
         <div
           style={{ backgroundColor: background_color, color: text_color }}
-          className="relative h-full w-full overflow-hidden"
+          className="relative h-full w-full overflow-y-auto"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex h-full flex-col overflow-y-auto px-6 pb-8 pt-24 md:px-10">
+          <div className="flex min-h-full flex-col px-6 pb-8 pt-24 md:px-10">
             <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
               Meus agendamentos
             </h3>
