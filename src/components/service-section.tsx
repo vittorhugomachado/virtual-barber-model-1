@@ -1,4 +1,5 @@
 import { Scissors } from "lucide-react";
+import { useBooking } from "../hooks/useBooking";
 import { useBarbershop } from "../hooks/useBarbershop";
 import {
   Carousel,
@@ -10,8 +11,9 @@ import {
 
 export function ServicesSection() {
   const { services, style } = useBarbershop();
+  const { openBookingModal } = useBooking();
   const { background_color, primary_color, text_color } = style;
-  console.log(services);
+
   return (
     <section
       id="servicos"
@@ -40,9 +42,11 @@ export function ServicesSection() {
                 key={service.id}
                 className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3"
               >
-                <div
+                <button
+                  type="button"
+                  onClick={() => openBookingModal([service.id])}
                   style={{ borderColor: `${text_color}30` }}
-                  className="group cursor-pointer h-full border"
+                  className="group h-full w-full cursor-pointer border text-left"
                 >
                   <div className="relative overflow-hidden">
                     {service.image_url ? (
@@ -85,7 +89,7 @@ export function ServicesSection() {
                         : ""}
                     </p>
                   </div>
-                </div>
+                </button>
               </CarouselItem>
             ))}
           </CarouselContent>

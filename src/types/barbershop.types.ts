@@ -1,4 +1,3 @@
-// Espelha: public.store_style
 export interface StoreStyle {
   text_color: string;
   background_color: string;
@@ -6,14 +5,12 @@ export interface StoreStyle {
   text_button_color: string;
 }
 
-// Espelha: public.social_media (whatsapp vem de barbershops.phone)
 export interface SocialMedia {
   instagram?: string | null;
   facebook?: string | null;
   tiktok?: string | null;
 }
 
-// Espelha: public.services
 export interface Service {
   id: string;
   name: string;
@@ -23,23 +20,26 @@ export interface Service {
   price?: number | null;
 }
 
-// Espelha: public.barbers + public.barber_services
 export interface Barber {
   id: string;
   name: string;
   avatar_url?: string | null;
   description?: string | null;
-  services: string[]; // nomes dos serviços via barber_services join
+  is_active: boolean;
+  serviceIds: string[];
+  services: string[];
 }
 
-// Espelha: public.addresses
 export interface Address {
+  country?: string | null;
   street: string;
   number: string;
   neighborhood: string;
   state: string;
   zip_code: string;
   complement?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface OpeningHour {
@@ -51,9 +51,7 @@ export interface OpeningHour {
   is_open: boolean;
 }
 
-// Dados completos da barbearia para o contexto
 export interface BarbershopData {
-  // public.barbershops
   id: string;
   name: string;
   slug: string;
@@ -61,22 +59,10 @@ export interface BarbershopData {
   description?: string | null;
   logo_url?: string | null;
   banner_url?: string | null;
-
-  // public.store_style
   style: StoreStyle;
-
-  // public.social_media
   socialMedia?: SocialMedia | null;
-
-  // public.addresses
   address?: Address | null;
-
-  // public.services
   services: Service[];
-
-  // public.barbers
   barbers: Barber[];
-
-  // public.opening_hours
   openingHours: OpeningHour[];
 }

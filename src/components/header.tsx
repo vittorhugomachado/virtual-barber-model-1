@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { LogIn, LogOut, User, UserPlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useBooking } from "../hooks/useBooking";
 import { useBarbershop } from "../hooks/useBarbershop";
+import { useCustomerAuth } from "../hooks/useCustomerAuth";
 
 function getBreakpoint(name: string): number {
   const len = name.length;
@@ -11,12 +14,21 @@ function getBreakpoint(name: string): number {
 }
 
 export function Header() {
-  const { name, description, style } = useBarbershop();
+  const { name, style } = useBarbershop();
+  const { openBookingModal, openMyAppointmentsModal } = useBooking();
+  const { profile, signInWithGoogle, signOut } = useCustomerAuth();
   const { text_color, background_color, primary_color } = style;
   const [menuOpen, setMenuOpen] = useState(false);
-  const baseBp = getBreakpoint(name);
-  const bp =
-    description && description.trim().length > 0 ? baseBp + 50 : baseBp;
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"entrar" | "cadastrar">(
+    "entrar",
+  );
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isStartingOAuth, setIsStartingOAuth] = useState(false);
+  const desktopUserMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement | null>(null);
+  const bp = getBreakpoint(name);
 
   const navItemClass = `
     cursor-pointer transition-opacity relative
@@ -25,6 +37,64 @@ export function Header() {
     after:transition-all after:duration-300
     hover:after:w-full
   `;
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const clickedDesktopMenu = desktopUserMenuRef.current?.contains(target);
+      const clickedMobileMenu = mobileUserMenuRef.current?.contains(target);
+
+      if (clickedDesktopMenu || clickedMobileMenu) return;
+      setUserMenuOpen(false);
+    };
+
+    window.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      window.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [userMenuOpen]);
+
+  const openAuthModal = (mode: "entrar" | "cadastrar") => {
+    setAuthError(null);
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+    setUserMenuOpen(false);
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      setAuthError(null);
+      setIsStartingOAuth(true);
+      await signInWithGoogle(window.location.href);
+    } catch (error) {
+      setAuthError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel continuar com Google.",
+      );
+      setIsStartingOAuth(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setUserMenuOpen(false);
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Nao foi possivel sair.",
+      );
+      setIsAuthModalOpen(true);
+      setUserMenuOpen(false);
+    }
+  };
+
+  const handleOpenMyAppointments = () => {
+    openMyAppointmentsModal();
+    setUserMenuOpen(false);
+  };
 
   return (
     <>
@@ -42,120 +112,382 @@ export function Header() {
 
       <header
         style={{ backgroundColor: background_color }}
-        className="w-full text-md xl:text-lg font-bold px-4 md:px-6 fixed top-0 left-0 z-50 overflow-x-hidden"
+        className="fixed top-0 left-0 z-120 w-full overflow-visible px-4 text-md font-bold md:px-6 xl:text-lg"
       >
-        <div className="flex items-center justify-between min-h-[11vh]">
-          {/* NOME COM QUEBRA DE LINHA - modificado aqui */}
+        <div className="flex min-h-[11vh] items-center justify-between">
           <h2
             style={{ color: text_color }}
-            className="text-center text-3xl xl:text-4xl inline px-2 wrap-break-word max-w-[60vw] sm:max-w-[70vw] leading-tight"
+            className="inline max-w-[60vw] px-2 text-center text-3xl leading-tight wrap-break-word sm:max-w-[70vw] xl:text-4xl"
           >
             {name.toUpperCase()}
           </h2>
 
           <ul
             style={{ color: text_color }}
-            className="nav-desktop gap-6 items-center mr-4"
+            className="nav-desktop items-center gap-6"
           >
-            {description && (
-              <li className={navItemClass}>
-                <a href="#sobre">SOBRE</a>
-              </li>
-            )}
             <li className={navItemClass}>
-              <a href="#servicos">SERVIÇOS</a>
+              <a href="#horarios">HORÁRIOS</a>
             </li>
             <li className={navItemClass}>
               <a href="#equipe">EQUIPE</a>
             </li>
             <li className={navItemClass}>
-              <a href="#horarios">HORÁRIOS</a>
+              <a href="#servicos">SERVIÇOS</a>
+            </li>
+            <li className={navItemClass}>
+              <a href="#contato">CONTATO</a>
             </li>
             <li className="ml-2">
               <div className="relative">
                 <div
                   style={{ backgroundColor: primary_color }}
-                  className="absolute top-1 left-1 w-full h-full"
+                  className="absolute top-1 left-1 h-full w-full"
                 />
-                <div
+                <button
+                  type="button"
+                  onClick={() => openBookingModal()}
                   style={{
                     color: text_color,
                     borderColor: text_color,
                     backgroundColor: background_color,
                   }}
-                  className="relative px-4 py-2 cursor-pointer border-2 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
+                  className="relative cursor-pointer border-2 px-4 py-2 transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5"
                 >
                   AGENDAR
-                </div>
+                </button>
+              </div>
+            </li>
+            <li className="ml-1">
+              <div ref={desktopUserMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen((current) => !current)}
+                  style={{ color: text_color }}
+                  className="cursor-pointer bg-transparent p-1"
+                  aria-label="Abrir menu do cliente"
+                >
+                  <User className="size-6" />
+                </button>
+
+                {userMenuOpen && (
+                  <div
+                    style={{
+                      backgroundColor: background_color,
+                      borderColor: `${text_color}30`,
+                      color: text_color,
+                    }}
+                    className="absolute right-0 top-full z-130 mt-3 min-w-64 border p-3 shadow-2xl"
+                  >
+                    {profile ? (
+                      <div className="space-y-1">
+                        <div className="border-b border-current/20 px-3 py-3 text-sm font-black uppercase tracking-[0.15em] opacity-80">
+                          {profile.name}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleOpenMyAppointments}
+                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                        >
+                          <User className="size-4" />
+                          Meu agendamentos
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                        >
+                          <LogOut className="size-4" />
+                          Sair
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => openAuthModal("entrar")}
+                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                        >
+                          <LogIn className="size-4" />
+                          Entrar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openAuthModal("cadastrar")}
+                          className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                        >
+                          <UserPlus className="size-4" />
+                          Se cadastrar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </li>
           </ul>
 
           <button
             style={{ color: text_color }}
-            className="hamburger flex-col gap-1.5 p-2 mr-4"
+            className="hamburger  flex-col gap-1.5 p-2"
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Abrir menu"
           >
             <span
-              className={`block w-6 h-0.5 bg-current transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2" : ""}`}
+              className={`block h-0.5 w-6 bg-current transition-all duration-300 ${menuOpen ? "translate-y-2 rotate-45" : ""}`}
             />
             <span
-              className={`block w-6 h-0.5 bg-current transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`}
+              className={`block h-0.5 w-6 bg-current transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`}
             />
             <span
-              className={`block w-6 h-0.5 bg-current transition-all duration-300 ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`}
+              className={`block h-0.5 w-6 bg-current transition-all duration-300 ${menuOpen ? "-translate-y-2 -rotate-45" : ""}`}
             />
           </button>
         </div>
 
-        {/* MENU MOBILE */}
         <div
-          className={`mobile-menu-wrapper overflow-hidden transition-all duration-300 w-full ${
+          className={`mobile-menu-wrapper w-full overflow-hidden transition-all duration-300 ${
             menuOpen ? "max-h-105 pb-4" : "max-h-0"
           }`}
         >
           <div className="max-w-full overflow-x-hidden px-2">
             <ul
-              style={{ color: text_color, height: menuOpen ? "180px" : "" }}
-              className="flex flex-col gap-4 pl-2 w-full"
+              style={{ color: text_color, height: menuOpen ? "220px" : "" }}
+              className="flex w-full flex-col gap-4 pl-2"
             >
-              {description && (
-                <li className={navItemClass}>
-                  <a href="#sobre">SOBRE</a>
-                </li>
-              )}
               <li className={navItemClass}>
-                <a href="#servicos">SERVIÇOS</a>
+                <a href="#horarios">HORÁRIOS</a>
               </li>
               <li className={navItemClass}>
                 <a href="#equipe">EQUIPE</a>
               </li>
               <li className={navItemClass}>
-                <a href="#horarios">HORÁRIOS</a>
+                <a href="#servicos">SERVIÇOS</a>
+              </li>
+              <li className={navItemClass}>
+                <a href="#contato">CONTATO</a>
               </li>
               <li className="mt-2 w-full max-w-36">
                 <div className="relative w-full">
                   <div
                     style={{ backgroundColor: primary_color }}
-                    className="absolute top-1.5 left-1.5 w-full h-full"
+                    className="absolute top-1.5 left-1.5 h-full w-full"
                   />
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => openBookingModal()}
                     style={{
                       color: text_color,
                       borderColor: text_color,
                       backgroundColor: background_color,
                     }}
-                    className="relative w-full px-4 py-2 cursor-pointer border-2 text-center hover:translate-x-1 transition-all duration-200"
+                    className="relative w-full cursor-pointer border-2 px-4 py-2 text-center transition-all duration-200 hover:translate-x-1"
                   >
                     AGENDAR
-                  </div>
+                  </button>
+                </div>
+              </li>
+              <li className="mt-2">
+                <div
+                  ref={mobileUserMenuRef}
+                  className="relative w-full max-w-52"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setUserMenuOpen((current) => !current)}
+                    style={{ color: text_color }}
+                    className="flex cursor-pointer items-center gap-3 bg-transparent p-0 text-left"
+                    aria-label="Abrir menu do cliente"
+                  >
+                    <User className="size-6" />
+                    <span className="text-sm font-bold uppercase tracking-[0.15em]">
+                      Cliente
+                    </span>
+                  </button>
+
+                  {userMenuOpen && (
+                    <div
+                      style={{
+                        backgroundColor: background_color,
+                        borderColor: `${text_color}30`,
+                        color: text_color,
+                      }}
+                      className="mt-3 border p-3"
+                    >
+                      {profile ? (
+                        <div className="space-y-1">
+                          <div className="border-b border-current/20 px-3 py-3 text-sm font-black uppercase tracking-[0.15em] opacity-80">
+                            {profile.name}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleOpenMyAppointments}
+                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          >
+                            <User className="size-4" />
+                            Meu agendamentos
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSignOut}
+                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          >
+                            <LogOut className="size-4" />
+                            Sair
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => openAuthModal("entrar")}
+                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          >
+                            <LogIn className="size-4" />
+                            Entrar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAuthModal("cadastrar")}
+                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm font-bold uppercase tracking-[0.15em] transition-opacity hover:opacity-75"
+                          >
+                            <UserPlus className="size-4" />
+                            Se cadastrar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </li>
             </ul>
           </div>
         </div>
+
+        <CustomerAuthModal
+          isOpen={isAuthModalOpen}
+          mode={authModalMode}
+          isLoading={isStartingOAuth}
+          error={authError}
+          textColor={text_color}
+          backgroundColor={background_color}
+          primaryColor={primary_color}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setIsStartingOAuth(false);
+          }}
+          onChangeMode={(mode) => {
+            setAuthError(null);
+            setAuthModalMode(mode);
+          }}
+          onContinueWithGoogle={handleGoogleAuth}
+        />
       </header>
     </>
+  );
+}
+
+function CustomerAuthModal({
+  isOpen,
+  mode,
+  isLoading,
+  error,
+  textColor,
+  backgroundColor,
+  primaryColor,
+  onClose,
+  onChangeMode,
+  onContinueWithGoogle,
+}: {
+  isOpen: boolean;
+  mode: "entrar" | "cadastrar";
+  isLoading: boolean;
+  error: string | null;
+  textColor: string;
+  backgroundColor: string;
+  primaryColor: string;
+  onClose: () => void;
+  onChangeMode: (mode: "entrar" | "cadastrar") => void;
+  onContinueWithGoogle: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-80 bg-black/70" onClick={onClose}>
+      <div className="relative mx-auto h-screen w-screen">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClose();
+          }}
+          style={{ color: textColor, borderColor: textColor }}
+          className="absolute right-6 top-4 z-10 cursor-pointer border px-4 py-3 text-sm font-black uppercase tracking-[0.2em]"
+        >
+          x
+        </button>
+
+        <div
+          style={{ backgroundColor, color: textColor }}
+          className="relative flex h-full w-full items-center justify-center overflow-hidden px-6"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            style={{ borderColor: `${textColor}30` }}
+            className="w-full max-w-xl border p-6 md:p-8"
+          >
+            <h2 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
+              {mode === "entrar" ? "Entrar" : "Criar conta"}
+            </h2>
+
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {(["entrar", "cadastrar"] as const).map((item) => {
+                const active = item === mode;
+
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => onChangeMode(item)}
+                    style={{
+                      backgroundColor: active ? primaryColor : "transparent",
+                      borderColor: active ? primaryColor : `${textColor}30`,
+                      color: active ? backgroundColor : textColor,
+                    }}
+                    className="cursor-pointer border px-4 py-2 text-xs font-black uppercase tracking-[0.2em]"
+                  >
+                    {item === "entrar" ? "Entrar" : "Criar conta"}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mt-6 text-center text-sm uppercase tracking-[0.16em] opacity-70">
+              {mode === "entrar"
+                ? "Entre com Google para acessar seus agendamentos."
+                : "Crie sua conta com Google para acompanhar seus agendamentos."}
+            </p>
+
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={onContinueWithGoogle}
+                disabled={isLoading}
+                style={{ backgroundColor: "#000000", color: "#FFFFFF" }}
+                className="cursor-pointer border border-black px-5 py-3 text-sm font-black uppercase tracking-[0.2em] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isLoading ? "Conectando..." : "Continuar com Google"}
+              </button>
+            </div>
+
+            {error && (
+              <p className="mt-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

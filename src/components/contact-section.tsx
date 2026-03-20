@@ -1,39 +1,64 @@
-import { Clock3 } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
+import { AiFillTikTok } from "react-icons/ai";
+import { FaFacebook, FaInstagram } from "react-icons/fa";
+import { IoLogoWhatsapp } from "react-icons/io";
 import { useBarbershop } from "../hooks/useBarbershop";
 
-const WEEK_DAYS = [
-  "Domingo",
-  "Segunda",
-  "Terca",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sabado",
-] as const;
+function getSafeExternalUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
 
-function formatHour(value: string) {
-  return value.slice(0, 5);
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function getMapEmbedUrl({
+  latitude,
+  longitude,
+  query,
+}: {
+  latitude?: number | null;
+  longitude?: number | null;
+  query: string;
+}) {
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    return `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`;
+  }
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
 }
 
 export function ContactSection() {
-  const { openingHours, style } = useBarbershop();
+  const { phone, address, socialMedia, style } = useBarbershop();
   const { background_color, primary_color, text_color } = style;
+  const instagramUrl = getSafeExternalUrl(socialMedia?.instagram);
+  const facebookUrl = getSafeExternalUrl(socialMedia?.facebook);
+  const tiktokUrl = getSafeExternalUrl(socialMedia?.tiktok);
 
-  const scheduleByDay = WEEK_DAYS.map((label, dayIndex) => {
-    const periods = openingHours
-      .filter((item) => item.day_of_week === dayIndex && item.is_open)
-      .sort((a, b) => a.period_order - b.period_order);
+  const addressParts = [
+    address?.street,
+    address?.number,
+    address?.neighborhood,
+    address?.state,
+    address?.zip_code,
+    address?.country,
+  ].filter(Boolean);
 
-    return {
-      label,
-      periods,
-      isClosed: periods.length === 0,
-    };
-  });
+  const fullAddress = addressParts.join(", ");
+  const mapUrl = address
+    ? getMapEmbedUrl({
+        latitude: address.latitude,
+        longitude: address.longitude,
+        query: fullAddress,
+      })
+    : null;
 
   return (
     <section
-      id="horarios"
+      id="contato"
       style={{ backgroundColor: background_color, color: text_color }}
       className="scroll-mt-[11vh] w-full px-6 md:px-10 lg:px-16 py-16 md:py-24"
     >
@@ -43,49 +68,128 @@ export function ContactSection() {
             style={{ borderColor: primary_color }}
             className="inline text-[40px] px-8 sm:text-[52px] font-black uppercase leading-none tracking-tight border-b-4"
           >
-            HORÁRIOS
+            CONTATO
           </h2>
         </div>
 
-        <div className="max-w-3xl mx-auto">
-          <div
-            style={{ borderColor: `${text_color}30` }}
-            className="border divide-y"
-          >
-            {scheduleByDay.map((day) => (
-              <div
-                key={day.label}
-                className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <Clock3 style={{ color: primary_color }} className="size-5 shrink-0" />
-                  <span className="text-lg font-bold uppercase tracking-wide">
-                    {day.label}
-                  </span>
-                </div>
+        <div className="gap-8 lg:items-stretch">
+          {mapUrl && (
+            <div
+              style={{ borderColor: `${text_color}30` }}
+              className="overflow-hidden border min-h-80"
+            >
+              <iframe
+                title="Mapa da barbearia"
+                src={mapUrl}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="h-full min-h-80 w-full"
+              />
+            </div>
+          )}
 
-                <div className="flex flex-wrap gap-2 md:justify-end">
-                  {day.isClosed ? (
-                    <span
-                      style={{ borderColor: primary_color, color: text_color }}
-                      className="border px-3 py-1 text-sm font-semibold uppercase tracking-wider opacity-70"
-                    >
-                      Fechado
-                    </span>
-                  ) : (
-                    day.periods.map((period) => (
-                      <span
-                        key={period.id}
-                        style={{ backgroundColor: primary_color, color: background_color }}
-                        className="px-3 py-1 text-sm font-bold uppercase tracking-wider"
-                      >
-                        {formatHour(period.opens_at)} - {formatHour(period.closes_at)}
-                      </span>
-                    ))
-                  )}
+          <div
+            className="flex flex-col justify-between items-center gap-8 p-6 md:p-8"
+          >
+            <div className="flex justify-center space-y-6">
+              {fullAddress && (
+                <div className="flex items-start gap-4">
+                  <MapPin
+                    style={{ color: primary_color }}
+                    className="mt-1 size-6 shrink-0"
+                  />
+                  <div>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest opacity-50">
+                      Endereco
+                    </p>
+                    <p className="text-lg font-semibold leading-relaxed">
+                      {fullAddress}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )}
+
+              {phone && (
+                <div className="flex items-start gap-4">
+                  <Phone
+                    style={{ color: primary_color }}
+                    className="mt-1 size-6 shrink-0"
+                  />
+                  <div>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest opacity-50">
+                      Telefone
+                    </p>
+                    <p
+                      className="text-lg font-semibold transition-opacity hover:opacity-70"
+                    >
+                      {phone}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-6">
+              {phone && (
+                <a
+                  href={`https://wa.me/55${phone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                  aria-label="WhatsApp"
+                >
+                  <IoLogoWhatsapp
+                    style={{ color: "#39DA56" }}
+                    className="size-12"
+                  />
+                </a>
+              )}
+
+              {instagramUrl && (
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                  aria-label="Instagram"
+                >
+                  <FaInstagram
+                    style={{ color: "#FE0CB1" }}
+                    className="size-12"
+                  />
+                </a>
+              )}
+
+              {facebookUrl && (
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                  aria-label="Facebook"
+                >
+                  <FaFacebook
+                    style={{ color: "#0266FF" }}
+                    className="size-12"
+                  />
+                </a>
+              )}
+
+              {tiktokUrl && (
+                <a
+                  href={tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                  aria-label="TikTok"
+                >
+                  <AiFillTikTok
+                    style={{ color: "#52D7D7" }}
+                    className="size-12"
+                  />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>

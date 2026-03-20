@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams, Routes, Route } from "react-router-dom";
+import { Route, Routes, useParams } from "react-router-dom";
+import { ContactSection } from "./components/contact-section";
+import { Header } from "./components/header";
+import { HeroSection } from "./components/hero-section";
+import { BookingProvider } from "./components/booking-modal";
+import { HoursSection } from "./components/hours-section";
+import { LoadingComponent } from "./components/loading-component";
+import { ServicesSection } from "./components/service-section";
+import { TeamSection } from "./components/team-section";
 import { BarberProvider } from "./context/barber-provider";
 import { fetchBarbershopBySlug } from "./services/barbershop.service";
 import type { BarbershopData } from "./types/barbershop.types";
-import { Header } from "./components/header";
-import { HeroSection } from "./components/hero-section";
-import { AboutSection } from "./components/about-section";
-import { ServicesSection } from "./components/service-section";
-import { TeamSection } from "./components/team-section";
-import { ContactSection } from "./components/contact-section";
-import { LoadingComponent } from "./components/loading-component";
 
 function BarbershopPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -58,12 +59,14 @@ function BarbershopPageContent({ slug }: BarbershopPageContentProps) {
 
   return (
     <BarberProvider data={data}>
-      <Header />
-      <HeroSection />
-      <AboutSection />
-      <ServicesSection />
-      <TeamSection />
-      <ContactSection />
+      <BookingProvider>
+        <Header />
+        <HeroSection />
+        <HoursSection />
+        <TeamSection />
+        <ServicesSection />
+        <ContactSection />
+      </BookingProvider>
     </BarberProvider>
   );
 }

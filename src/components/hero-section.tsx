@@ -1,7 +1,9 @@
 import { useBarbershop } from "../hooks/useBarbershop";
+import { useBooking } from "../hooks/useBooking";
 
 export function HeroSection() {
   const { banner_url, style } = useBarbershop();
+  const { openBookingModal } = useBooking();
   const { background_color, primary_color, text_color, text_button_color } =
     style;
 
@@ -17,6 +19,8 @@ export function HeroSection() {
             className="absolute top-1.5 left-1.5 w-full h-full"
           />
           <button
+            type="button"
+            onClick={() => openBookingModal()}
             style={{
               backgroundColor: primary_color,
               color: text_button_color,

@@ -15,12 +15,15 @@ type SocialMediaRow = {
 };
 
 type AddressRow = {
+  country?: string | null;
   street: string;
   number: string;
   neighborhood: string;
   state: string;
   zip_code: string;
   complement?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type ServiceRow = {
@@ -42,7 +45,10 @@ type OpeningHourRow = {
 };
 
 type BarberServiceRelation = {
-  services?: { name?: string | null } | { name?: string | null }[] | null;
+  services?:
+    | { id?: string | null; name?: string | null }
+    | { id?: string | null; name?: string | null }[]
+    | null;
 };
 
 type BarberRow = {
@@ -50,6 +56,7 @@ type BarberRow = {
   name: string;
   avatar_url?: string | null;
   description?: string | null;
+  is_active?: boolean | null;
   barber_services?: BarberServiceRelation[] | null;
 };
 
@@ -76,12 +83,12 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
       id, name, slug, phone, description, logo_url, banner_url,
       store_style ( text_color, background_color, primary_color, text_button_color ),
       social_media ( instagram, facebook, tiktok ),
-      addresses ( street, number, neighborhood, state, zip_code, complement ),
+      addresses ( country, street, number, neighborhood, state, zip_code, complement, latitude, longitude ),
       opening_hours ( id, day_of_week, opens_at, closes_at, period_order, is_open ),
       services ( id, name, image_url, description, duration_min, price ),
       barbers (
-        id, name, avatar_url, description,
-        barber_services ( services ( name ) )
+        id, name, avatar_url, description, is_active,
+        barber_services ( services ( id, name ) )
       )
     `)
     .eq("slug", slug)
@@ -104,6 +111,32 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
   );
   const services = getArrayRelation(data.services as ServiceRow | ServiceRow[] | null);
   const barbers = getArrayRelation(data.barbers as BarberRow | BarberRow[] | null);
+  const normalizedBarbers = barbers.map((barber) => {
+    const relatedServices = (barber.barber_services ?? []).flatMap((relation) =>
+      getArrayRelation(relation.services),
+    );
+
+    return {
+      id: barber.id,
+      name: barber.name,
+      avatar_url: barber.avatar_url ?? null,
+      description: barber.description ?? null,
+      is_active: barber.is_active ?? true,
+      serviceIds: relatedServices
+        .map((service) => service.id)
+        .filter((serviceId): serviceId is string => !!serviceId),
+      services: relatedServices
+        .map((service) => service.name)
+        .filter((serviceName): serviceName is string => !!serviceName),
+    };
+  });
+  const activeBarbers = normalizedBarbers.filter((barber) => barber.is_active);
+  const filteredServices = services.filter((service) =>
+    activeBarbers.some(
+      (barber) =>
+        barber.serviceIds.length === 0 || barber.serviceIds.includes(service.id),
+    ),
+  );
 
   return {
     id: data.id,
@@ -124,16 +157,7 @@ export async function fetchBarbershopBySlug(slug: string): Promise<BarbershopDat
     openingHours: openingHours
       .filter((item) => item.day_of_week >= 0 && item.day_of_week <= 6)
       .sort((a, b) => a.day_of_week - b.day_of_week || a.period_order - b.period_order),
-    services,
-    barbers: barbers.map((barber) => ({
-      id: barber.id,
-      name: barber.name,
-      avatar_url: barber.avatar_url ?? null,
-      description: barber.description ?? null,
-      services: (barber.barber_services ?? [])
-        .flatMap((relation) => getArrayRelation(relation.services))
-        .map((service) => service.name)
-        .filter((name): name is string => !!name),
-    })),
+    services: filteredServices,
+    barbers: normalizedBarbers,
   };
 }
