@@ -34,6 +34,7 @@ function formatAppointmentStatus(status: string | null) {
 
   if (normalizedStatus === "scheduled") return "Agendado";
   if (normalizedStatus === "completed") return "Concluido";
+  if (normalizedStatus === "no_show") return "Não compareceu";
   if (normalizedStatus.includes("cancel")) return "Cancelado";
 
   return status;
@@ -168,7 +169,7 @@ export function MyAppointmentsModal({
             borderColor: text_color,
             backgroundColor: background_color,
           }}
-          className="absolute top-4 right-6 z-10 flex items-center justify-center border px-4 py-3 text-sm font-black uppercase tracking-[0.2em]"
+          className="absolute cursor-pointer top-4 right-6 z-10 flex items-center justify-center border px-4 py-3 text-sm font-black uppercase tracking-[0.2em]"
         >
           <span className="inline-flex items-center gap-2">
             <X className="size-4" />
@@ -309,11 +310,11 @@ export function MyAppointmentsModal({
                           type="button"
                           onClick={() => handleCancelAppointment(appointment.id)}
                           disabled={isCancellingId === appointment.id}
-                          className="cursor-pointer px-3 py-2 text-xs uppercase tracking-[0.18em] text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="cursor-pointer px-3 py-2 text-xs tracking-[0.18em] text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {isCancellingId === appointment.id
                             ? "Cancelando..."
-                            : "Cancelar"}
+                            : "cancelar"}
                         </button>
                       )}
                     </div>

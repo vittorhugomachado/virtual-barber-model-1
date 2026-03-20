@@ -4,6 +4,7 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronDown,
+  Clock3,
   Scissors,
   X,
   User,
@@ -1417,7 +1418,7 @@ function BookingModal({
           {!submitSuccess && (
             <>
               <h3 className="text-center text-xl font-black uppercase tracking-[0.18em] md:text-2xl">
-                {submitSuccess ? "Agendado com sucesso" : "Confirme os dados"}
+                Confirme os dados
               </h3>
               <div
                 style={{ borderColor: `${text_color}30` }}
@@ -1429,58 +1430,71 @@ function BookingModal({
                 >
                   Agendamento
                 </p>
-                <div className="space-y-2">
-                  <p className="text-sm uppercase opacity-60">Servicos</p>
-                  <div className="space-y-3">
-                    {scheduledSelections.map(
-                      ({ service, selection, barber }) => {
-                        return (
-                          <div
-                            key={service.id}
-                            style={{ borderColor: `${text_color}20` }}
-                            className="border p-4"
-                          >
-                            <div className="text-center">
-                              <p className="text-sm uppercase opacity-60">
-                                Serviço
-                              </p>
-                              <p className="text-base font-black uppercase">
-                                {service.name}
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="mt-2 text-sm uppercase opacity-60">
-                                Profissional
-                              </p>
-                              <p className="text-base font-semibold">
-                                {barber?.name ?? "-"}
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="mt-2 text-sm uppercase opacity-60">
-                                Data
-                              </p>
-                              <p className="text-base font-semibold">
-                                {formatDateLabel(selectedDate)}
-                              </p>
-                            </div>
-                            <div className="text-center">
-                              <p className="mt-2 text-sm uppercase opacity-60">
-                                Horário
-                              </p>
-                              <p className="text-base font-semibold">
-                                {`${selection.slot.startsAt} - ${selection.slot.endsAt}`}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      },
-                    )}
-                  </div>
+                <div className="space-y-3">
+                  {scheduledSelections.map(({ service, selection, barber }) => (
+                    <div
+                      key={service.id}
+                      style={{ borderColor: `${text_color}20` }}
+                      className="flex flex-col gap-3 border px-4 py-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                        <span
+                          style={{ color: text_color }}
+                          className="text-sm font-semibold uppercase tracking-[0.18em]"
+                        >
+                          {formatDateLabel(selectedDate)}
+                        </span>
+
+                        <div className="flex items-center gap-1 text-sm shrink-0">
+                          <Clock3
+                            style={{ color: primary_color }}
+                            className="h-3.5 w-3.5 shrink-0"
+                          />
+                          <span className="font-medium">
+                            {selection.slot.startsAt}
+                          </span>
+                          <span className="opacity-50">-</span>
+                          <span className="opacity-70">
+                            {selection.slot.endsAt}
+                          </span>
+                        </div>
+
+                        <div className="flex min-w-0 items-center gap-1.5 text-sm overflow-hidden">
+                          <User
+                            style={{ color: primary_color }}
+                            className="h-3.5 w-3.5 shrink-0"
+                          />
+                          <span className="truncate font-medium">
+                            {barber?.name ?? "Barbeiro"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm lg:justify-start">
+                        <Scissors
+                          style={{ color: primary_color }}
+                          className="h-3.5 w-3.5 shrink-0"
+                        />
+                        <span className="truncate opacity-80">
+                          {service.name}
+                        </span>
+                        <span className="opacity-50">-</span>
+                        <span className="font-semibold">
+                          {service.price != null
+                            ? Number(service.price).toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })
+                            : "-"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
           )}
+
 
           {submitSuccess ? (
             <div
